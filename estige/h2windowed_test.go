@@ -11,6 +11,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
@@ -251,4 +252,44 @@ func TestH2UnboundedRefusedOnCappedPort(t *testing.T) {
 			t.Fatalf("status=%d, want the camouflage 404", resp.StatusCode)
 		}
 	})
+}
+
+// Every window re-authenticates: a request whose certificate is well-formed
+// but not the pinned relay dies at the camouflage 404 before any TLS flight.
+func TestH2WindowedRefusesUntrustedCertificate(t *testing.T) {
+	s := newTunnelServer(t, true, egressConfig{})
+	backend := newHTTPServer(t, s)
+	otherPriv := testHostKey(t)
+	otherDER, err := mintPrincipalCertificate(otherPriv, time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	hdr, _, err := channelRequestHeaders(otherPriv, testV5Principal, testV5Principal, otherDER)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hello, err := encodeHello("untrusted-window")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, err := encodeFrame(frameHello, tunnelStreamV1, hello)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost,
+		backend.URL+tunnelPath, bytes.NewReader(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+	maps.Copy(req.Header, hdr)
+	req.Header.Set(windowHeader, strconv.FormatInt(h2WindowedBytes, 10))
+	req.Header.Set("Traceparent", buildTraceparent("000000000000000000000000000000f1", 1))
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("untrusted window answered %d, want camouflage 404", resp.StatusCode)
+	}
 }

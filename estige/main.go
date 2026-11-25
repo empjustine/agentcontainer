@@ -140,6 +140,15 @@ func writeProblem(w http.ResponseWriter, r *http.Request, status int, code, titl
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.Header().Set("Cache-Control", "no-store")
 	w.WriteHeader(status)
+	writeProblemBody(w, r, status, code, title, err)
+}
+
+// writeProblemBody is the body half for handlers whose 200 is already on the
+// wire: a window opens before its frames are read, so a later failure can
+// only be reported in the body, never in a second status line.
+func writeProblemBody(w http.ResponseWriter, r *http.Request, status int, code, title string, err error) {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Cache-Control", "no-store")
 	// The encode error is logged, not returned: the status line is already on
 	// the wire, so the log is the only honest signal left (NFR-2). The any-typed
 	// Details member is why errchkjson refuses a blank assignment here.
@@ -416,10 +425,11 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 var version = "dev"
 
 func main() {
-	// Three subcommands remain, each print-and-exit: `proxy-env` prints the
+	// Four subcommands remain, each print-and-exit: `proxy-env` prints the
 	// loopback proxy spelling for the operator's shell (docs/d095); `keygen`
-	// mints the host identity key material and `public` derives a peer-ready
-	// config entry from it (docs/d169, the store d132 describes). `generate`
+	// mints the host identity key material, `public` derives a peer-ready
+	// config entry and `key check` validates the role stores (d104/d132/d236).
+	// `generate`
 	// went with the allowlist it emitted (docs/d108) and `smoke-test` went
 	// with the reverse-proxy behaviour it checked; the installed service units
 	// own everything else. Role selection stays `-mode`.
@@ -433,6 +443,10 @@ func main() {
 	}
 	if len(os.Args) > 1 && os.Args[1] == "public" {
 		runPublic(os.Args[2:])
+		return
+	}
+	if len(os.Args) > 2 && os.Args[1] == "key" && os.Args[2] == "check" {
+		runKeyCheck(os.Args[3:])
 		return
 	}
 

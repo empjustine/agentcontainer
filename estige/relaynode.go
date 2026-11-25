@@ -69,6 +69,7 @@ type relayConfig struct {
 	store     *relayStore
 	peerName  string
 	selfDER   []byte
+	replay    *nonceRing  // exit proofs already consumed on this relay
 	proxyAddr string      // HTTP CONNECT listener (must be loopback, VPN-R23)
 	socksAddr string      // SOCKS5 listener (must be loopback, VPN-R23)
 	chain     *chainProxy // optional upstream chain for the tunnel leg (docs/d094)
@@ -88,11 +89,18 @@ type relayConfig struct {
 
 // channelHeaders mints one fresh blind token and pins the paired exit's
 // certificate for one HTTP exchange.
-func (c *relayConfig) channelHeaders() (http.Header, error) {
+func (c *relayConfig) channelHeaders() (http.Header, []byte, error) {
 	if c.store == nil {
-		return nil, errors.New("v5 store is not loaded")
+		return nil, nil, errors.New("v5 store is not loaded")
 	}
 	return channelRequestHeaders(c.store.Private, c.store.Principal, c.peerName, c.selfDER)
+}
+
+// verifyExitResponse authenticates the exit's half of one exchange before
+// any tunnel frame is written. The endpoint appears only in the operator's
+// hint, never in the refusal the peer sees.
+func (c *relayConfig) verifyExitResponse(hdr http.Header, relayNonce []byte) error {
+	return verifyExitResponse(hdr, c.store, c.tunnelURL.Host, c.replay, relayNonce)
 }
 
 // h2Posture values: the zero value is "not yet discovered".
@@ -150,6 +158,7 @@ func relayConfigFromEnv(proxyAddr, socksAddr string, legacyIPRelay, insecureExit
 	cfg.store = store
 	cfg.peerName = store.Exits[0].Name
 	cfg.selfDER = store.SelfDER
+	cfg.replay = newNonceRing(replayRingSize)
 	cfg.tunnelURL = u
 	cfg.token = os.Getenv(envOperatorToken)
 	cfg.label = os.Getenv(envClientLabel)
@@ -620,12 +629,20 @@ func (c *relayNode) openH2Carrier(ctx context.Context, id string, windowed bool)
 // openWebSocket is the WebSocket rung, extracted so every ladder shares one
 // handshake spelling.
 func (c *relayNode) openWebSocket(ctx context.Context, id string) (tunnelStream, error) {
-	hdr, err := c.cfg.channelHeaders()
+	hdr, nonce, err := c.cfg.channelHeaders()
 	if err != nil {
 		return nil, err
 	}
 	hdr.Set(sessionIDHeader, id)
-	return wsDial(ctx, c.cfg.tunnelURL, hdr, c.tunnelDial(), c.cfg.insecureExit)
+	ws, err := wsDial(ctx, c.cfg.tunnelURL, hdr, c.tunnelDial(), c.cfg.insecureExit)
+	if err != nil {
+		return nil, err
+	}
+	if err := c.cfg.verifyExitResponse(ws.respHeader, nonce); err != nil {
+		_ = ws.Close()
+		return nil, err
+	}
+	return ws, nil
 }
 
 func (c *relayNode) openTunnel(ctx context.Context, target string) (tunnelStream, error) {

@@ -10,12 +10,12 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/http/httptest"
-	"net/http/httputil"
-	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -46,27 +46,6 @@ func h1PostWindowedFetch(t *testing.T, httpAddr, targetHost string, upPort uint1
 	if resp.StatusCode != http.StatusOK || string(body) != "hello-post" || resp.Header.Get("X-Upstream") != "yes" {
 		t.Fatalf("status=%d body=%q upstream-header=%q", resp.StatusCode, body, resp.Header.Get("X-Upstream"))
 	}
-}
-
-// newHostileGateway is the posture h1.1-post-windowed exists for (d077 §1): a gateway
-// that refuses WebSocket upgrades with a plain 403 while passing ordinary
-// POSTs. The tunnel URL is ws:// so the ALPN leg cannot exist — the ladder
-// under test is D-refused → E, the rung this record's amendment added.
-func newHostileGateway(t *testing.T, backend *httptest.Server) *httptest.Server {
-	t.Helper()
-	bu, err := url.Parse(backend.URL)
-	if err != nil {
-		t.Fatal(err)
-	}
-	rp := httputil.NewSingleHostReverseProxy(bu)
-	rp.FlushInterval = time.Millisecond
-	return newHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if headerHasToken(r.Header, "Upgrade", "websocket") {
-			http.Error(w, "upgrades are not supported", http.StatusForbidden)
-			return
-		}
-		rp.ServeHTTP(w, r)
-	}))
 }
 
 // wireRelayNode starts the relay role exactly as -mode relay wires it
@@ -104,6 +83,13 @@ func wireRelayNode(t *testing.T, tunnelURL string) (string, func()) {
 // h1.1-post-windowed runs on).
 func h1PostWindowedTestServer(t *testing.T, upstream *httptest.Server) *httptest.Server {
 	t.Helper()
+	return newHTTPServer(t, h1PostWindowedTestBackend(t, upstream))
+}
+
+// h1PostWindowedTestBackend is the tunnel handler itself, for fixtures that
+// need to be the TLS edge (no reverse proxy) to keep a window full duplex.
+func h1PostWindowedTestBackend(t *testing.T, upstream *httptest.Server) *server {
+	t.Helper()
 	upPort := portOf(t, upstream.Listener.Addr().String())
 	armTestTunnelEnv(t)
 	s := &server{}
@@ -113,7 +99,7 @@ func h1PostWindowedTestServer(t *testing.T, upstream *httptest.Server) *httptest
 	}); err != nil {
 		t.Fatal(err)
 	}
-	return newHTTPServer(t, s)
+	return s
 }
 
 func TestH1PostWindowedEndToEndOverPlainH1(t *testing.T) {
@@ -122,14 +108,14 @@ func TestH1PostWindowedEndToEndOverPlainH1(t *testing.T) {
 		_, _ = io.WriteString(w, "hello-post")
 	}))
 	upPort := portOf(t, upstream.Listener.Addr().String())
-	backend := h1PostWindowedTestServer(t, upstream)
+	backend := h1PostWindowedTestBackend(t, upstream)
+	front := newUpgradeRefusingTLSFront(t, backend)
 
 	// The cleartext end of docs/d090's accepted set (an honest http:// URL,
-	// normalized to ws once) behind the upgrade-stripping gateway: with the
+	// normalized to ws once) behind an upgrade-refusing TLS edge: with the
 	// whole ladder riding (docs/d093), a plain tunnel server legitimately
-	// carries D — E is what a refused upgrade demotes to, so the gateway is
+	// carries D — E is what a refused upgrade demotes to, so the edge is
 	// what pins the carrier under test.
-	front := newTLSFront(t, newHostileGateway(t, backend), false)
 	httpAddr, stopRelay := wireRelayNode(t, front.URL+tunnelPath)
 	defer stopRelay()
 	logBuf := captureLog(t)
@@ -184,14 +170,13 @@ func TestH1PostWindowedDemotionThroughHostileGateway(t *testing.T) {
 		_, _ = io.WriteString(w, "hello-post")
 	}))
 	upPort := portOf(t, upstream.Listener.Addr().String())
-	backend := h1PostWindowedTestServer(t, upstream)
-	gateway := newHostileGateway(t, backend)
+	backend := h1PostWindowedTestBackend(t, upstream)
+	front := newUpgradeRefusingTLSFront(t, backend)
 
-	// The whole ladder rides (docs/d093): on the cleartext plane C is
-	// unreachable, D is refused by the gateway, E must carry the session —
+	// The whole ladder rides (docs/d093): on the h1 plane C is
+	// unreachable, D is refused by the edge, E must carry the session —
 	// and the refusal must be LOGGED as a demotion, never surfacing as
 	// failure (d077 §4's invariant, the amendment's ladder).
-	front := newTLSFront(t, gateway, false)
 	httpAddr, stopRelay := wireRelayNode(t, front.URL+tunnelPath)
 	defer stopRelay()
 	logBuf := captureLog(t)
@@ -217,8 +202,8 @@ func TestGeneralizedTunnelURLDemotesOverTLS(t *testing.T) {
 		_, _ = io.WriteString(w, "hello-post")
 	}))
 	upPort := portOf(t, upstream.Listener.Addr().String())
-	backend := h1PostWindowedTestServer(t, upstream)
-	front := newTLSFront(t, newHostileGateway(t, backend), false)
+	backend := h1PostWindowedTestBackend(t, upstream)
+	front := newUpgradeRefusingTLSFront(t, backend)
 
 	httpAddr, stopRelay := wireRelayNode(t, front.URL+tunnelPath)
 	defer stopRelay()
@@ -299,7 +284,7 @@ func TestH1PostWindowedWindowsAreAuthenticatedAndCamouflaged(t *testing.T) {
 	})
 
 	t.Run("span 1 opens a session, attributed to its key", func(t *testing.T) {
-		status := post(t, firstWindow, testTunnelToken, hello)
+		status, _ := postWindowWithChannel(t, target, firstWindow, hello)
 		if status != http.StatusOK {
 			t.Fatalf("first window answered %d, want 200", status)
 		}
@@ -314,7 +299,7 @@ func TestH1PostWindowedWindowsAreAuthenticatedAndCamouflaged(t *testing.T) {
 		}
 		// The correct next span still works (the refusal above was a
 		// window, not a session kill): span 2 gets its 200.
-		status = post(t, buildTraceparent(validTrace, 2), testTunnelToken, hello)
+		status, _ = postWindowWithChannel(t, target, buildTraceparent(validTrace, 2), hello)
 		if status != http.StatusOK {
 			t.Fatalf("next in-sequence window answered %d, want 200", status)
 		}
@@ -349,32 +334,11 @@ func TestH1PostWindowedDrainFailureAnswersAnError(t *testing.T) {
 		body = append(body, frame...)
 	}
 
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, target, bytes.NewReader(body))
-	if err != nil {
-		t.Fatal(err)
-	}
-	applyTestV5Headers(t, req.Header)
-	req.Header.Set("Traceparent", buildTraceparent("000000000000000000000000000000cc", firstWindowSpan))
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusOK {
-		t.Fatal("a window the exit could not drain answered 200 — the client cannot see the dead session")
-	}
-	if resp.StatusCode != http.StatusInternalServerError {
-		t.Fatalf("drain failure answered %d, want 500", resp.StatusCode)
-	}
-	// The body must actually be written, not merely the status: an empty
-	// problem body is the same silent-success shape one layer up.
-	payload, err := io.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(payload) == 0 {
-		t.Fatal("drain failure wrote a status with an empty body")
+	status, detail := postWindowWithChannel(t, target, buildTraceparent("000000000000000000000000000000cc", firstWindowSpan), body)
+	// The 200 is committed when the handshake opens the window, so the
+	// failure is visible in the body, not in a second status line.
+	if status != http.StatusOK || !strings.Contains(detail, "tunnel-window-failed") {
+		t.Fatalf("drain failure answered status=%d body=%q", status, detail)
 	}
 }
 
@@ -455,7 +419,7 @@ func TestH1PostWindowedDesyncDoesNotKillTheSession(t *testing.T) {
 	}
 
 	const trace = "000000000000000000000000000000ee"
-	if got := post(t, buildTraceparent(trace, firstWindowSpan)); got == http.StatusNotFound {
+	if got, _ := postWindowWithChannel(t, target, buildTraceparent(trace, firstWindowSpan), nil); got == http.StatusNotFound {
 		t.Fatalf("first window refused (%d)", got)
 	}
 	// Out-of-sequence with the SAME key: refused, session untouched.
@@ -463,7 +427,84 @@ func TestH1PostWindowedDesyncDoesNotKillTheSession(t *testing.T) {
 		t.Fatalf("desynced window answered %d, want 404", got)
 	}
 	// The in-sequence window still works, proving no session kill happened.
-	if got := post(t, buildTraceparent(trace, 2)); got == http.StatusNotFound {
+	if got, _ := postWindowWithChannel(t, target, buildTraceparent(trace, 2), nil); got == http.StatusNotFound {
 		t.Fatal("a desynced window killed the session; it must not (only an auth failure does)")
 	}
+}
+
+// postWindowWithChannel drives one h1.1-post-windowed exchange the way the
+// relay does: proof headers, 200, inner TLS handshake, then the window's
+// frames. Refusals that arrive before the handshake are still read as plain
+// HTTP statuses, so the camouflage matrix stays testable at this layer.
+func postWindowWithChannel(t *testing.T, target, traceparent string, frames []byte) (int, string) {
+	t.Helper()
+	store, err := loadRelayStore(storeRoot())
+	if err != nil {
+		t.Fatal(err)
+	}
+	hdr, nonce, err := channelRequestHeaders(store.Private, store.Principal, store.Exits[0].Name, store.SelfDER)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pr, pw := io.Pipe()
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, target, pr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	maps.Copy(req.Header, hdr)
+	req.Header.Set("Traceparent", traceparent)
+	type dialResult struct {
+		resp *http.Response
+		err  error
+	}
+	dialed := make(chan dialResult, 1)
+	go func() {
+		resp, err := http.DefaultClient.Do(req) //nolint:bodyclose // the helper closes resp before returning
+		dialed <- dialResult{resp: resp, err: err}
+	}()
+	result := <-dialed
+	if result.err != nil {
+		_ = pw.Close()
+		t.Fatal(result.err)
+	}
+	resp := result.resp
+	if resp.StatusCode != http.StatusOK {
+		_ = pw.Close()
+		_, _ = io.Copy(io.Discard, resp.Body)
+		_ = resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+		return resp.StatusCode, string(body)
+	}
+	if err := verifyExitResponse(resp.Header, store, req.URL.Host, newNonceRing(4), nonce); err != nil {
+		_ = pw.Close()
+		t.Fatal(err)
+	}
+	local := tls.Certificate{Certificate: [][]byte{store.SelfDER}, PrivateKey: store.Private}
+	carrier := &windowCarrier{
+		readFrame: func() ([]byte, error) { return readFrameFromStream(resp.Body) },
+		writeFrame: func(msg []byte) error {
+			_, err := pw.Write(msg)
+			return err
+		},
+		fail:    func() { _ = pw.Close() },
+		carrier: carrierH1Windowed,
+		session: traceparent,
+	}
+	conn, err := clientChannelHandshake(context.Background(), carrier, local, store.Exits[0].Cert)
+	if err != nil {
+		_ = pw.Close()
+		t.Fatal(err)
+	}
+	carrier.fail = func() {}
+	if _, err := conn.Write(frames); err != nil {
+		t.Fatal(err)
+	}
+	if err := pw.Close(); err != nil {
+		t.Fatal(err)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	_ = conn.Close()
+	return resp.StatusCode, string(body)
 }

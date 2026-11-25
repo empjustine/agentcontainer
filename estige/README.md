@@ -34,9 +34,18 @@ end to end and never trust the node in the middle.
 > initiation and the relay switches to websocket → h2-post-windowed →
 > h1.1-post-windowed for the rest of the process (docs/d222). The
 > `-modes`/`MODES` knob retired with docs/d093. Requirements are d188's, negotiation/framing d077's, names
-> d105's, the credential redesign d104's, the inner channel d169's and the
-> front-door mTLS session d211's. The later three are designs on record; the
-> deployed transports are v3.
+> d105's, the blind `e-auth` credential d104/d131/d236's, and the inner TLS
+> channel d169/d236's. v5 is the generation in this binary: every admitted
+> exchange carries a mutual single-use proof and every carrier runs an inner
+> TLS 1.3 session — one per window on the windowed carriers. The front-door
+> mTLS of d211 (v6) remains a design on record.
+
+> **Key store (docs/d236).** `estige keygen -principal <name>` mints the
+> Ed25519 key and its self-signed certificate in `prv/<principal>.der` and
+> `<principal>.crt`, printing the `{name, public}` row to paste into the peer's
+> `relay.json`/`exit.json`. `estige public -f <key>` reprints that row from an
+> existing key; `estige key check` loads the role stores with the same strict
+> parser boot uses. A re-mint is a pin change, not an in-place rotation.
 
 Historical reference for the deleted proxy: llama-swap,
 github.com/mostlygeek/llama-swap (`internal/router/peer.go`) — estige was
@@ -83,13 +92,23 @@ left disabled, so installing starts nothing. The unit has an empty
 drop-in with both `CapabilityBoundingSet=CAP_NET_BIND_SERVICE` and
 `AmbientCapabilities=CAP_NET_BIND_SERVICE` (the packaged default is 8080).
 
-**Container (image still built; the operator launches it)**
+**Container (binary built on the host; the operator launches the image)**
 
 ```console
-$ ./node-run.sh estige/build.mjs estige-image
-$ podman run -d --name estige-exit --network=host \
-    --env-file ~/.config/estige/exit.env localhost/estige:latest -mode exit
+$ go build .                     # the one compile
+$ go run build.go                # packages ./estige into localhost/estige:<VERSION>
+$ mkdir -p /var/lib/estige && chown 65532:65532 /var/lib/estige
+$ ESTIGE_ENV_FILE=~/.config/estige/exit.env go run run.go -mode exit
 ```
+
+`build.go` and `run.go` are standalone Go files (d236): `go run <file>`
+compiles that file alone, so the image path has no second build
+implementation and no node prerequisite. The image is Debian trixie-slim
+with `ca-certificates` and `busybox-static`, runs as uid 65532, and reads its
+store from `/var/lib/estige` (bind `ESTIGE_STORE_DIR` to move the host path).
+Env reaches the container by name from `--env-file` when set, otherwise as
+explicit `-e` names; argv after the image is forwarded to the binary. There
+is no restart policy — the operator's service manager owns supervision.
 
 The in-process container launch (`vpn-exit.sh`/`vpn-relay.sh` plus the
 workload library) is deleted: the runtime is the operator's service manager,
@@ -146,15 +165,13 @@ say. The policy half's permanent home is docs/d104's role store — its
 lands, the env chain carries it. Nothing here can _grant_ the capability: only
 the credential does.
 
-**This env surface is v3's, and `VPN_*` is deprecated.** docs/d104's deployment
-generation v4 keeps the tunnel wire exactly as designed and moves credential
-material — and egress, into `exit.json` — from the env chain into the
-role-scoped store (`~/.local/share/estige/`). So `VPN_OPERATOR_KEYS`,
-`VPN_OPERATOR_TOKEN`, `VPN_TUNNEL_URL`, `VPN_TUNNEL_EGRESS` and
-`VPN_CLIENT_LABEL` retire with v4 (VPN-R32's amendment, docs/d104), leaving
-`PORT` and non-secret runtime knobs. Until v4 lands this table is the whole
-surface, and the v3/v4 pair upgrade fails closed in both directions rather
-than downgrading.
+**This env surface is v3's, and `VPN_*` is deprecated.** v5 (docs/d236)
+keeps the tunnel transports and moves identity and admission into the merged
+host store at `$XDG_DATA_HOME/estige`: one Ed25519 key and its self-signed
+certificate in `prv/<principal>.der`, peers pinned by the certificate's
+`public` row in `relay.json`/`exit.json`. The `VPN_*` credential and URL
+spellings retire with that generation; `PORT` and non-secret runtime knobs
+stay. Older wire generations fail closed — no fallback or downgrade path.
 
 ## Build & run
 
@@ -167,13 +184,10 @@ there is no root builder any more; each folder is a copy unit). Targets:
 - `estige-packages` — the pure-Go `.deb` + `.rpm` writer (`packaging/`). It
   cross-compiles both payloads (android/arm64, linux/amd64), so the build host
   needs only go. Artifacts land in `packaging/out/` (gitignored).
-- `estige-image` — the OCI image (`Containerfile`: multi-stage `golang:1.27`
-  → `scratch`); registered only when a container backend exists and the naive
-  cloud probe answers. The compile happens inside the image, so the host needs
-  no go toolchain. `scratch` is deliberate: the final stage pulls from NO
-  registry, so the image builds where non-docker.io registries are blocked;
-  the image ships the CA bundle both TLS legs verify against and is ~7.5 MB
-  final.
+- `estige-image` has moved to Go (d236): `go build .` then
+  `go run build.go` (and `go run run.go` to launch). It packages the built
+  binary into Debian trixie-slim; the node builder no longer registers an
+  image target.
 - `termux-provisioning` — the repo-root device provisioner, run first on
   Termux. It installs the infisical CLI (the operator's env chain) plus the
   `node`/`jq` the _other_ Termux units still need (`llm-local-inference`'s

@@ -128,16 +128,17 @@ config file grew in their place: the Termux runit `run` script sources
 `EnvironmentFile=`, and the binary still sees only environment variables
 (docs/d108/d110).
 
-Two units, not one `estige@.service`: the roles carry disjoint credentials
-(`VPN_OPERATOR_KEYS` vs `VPN_OPERATOR_TOKEN`) and disjoint listeners (the
+Two units, not one `estige@.service`: the roles carry disjoint host keys and
+pairing files (`exit.json` vs `relay.json`, d236) and disjoint listeners (the
 funnel port vs loopback CONNECT/SOCKS5). A template would need per-instance
-credential indirection and would still ship two different `ExecStart=` shapes;
+store indirection and would still ship two different `ExecStart=` shapes;
 two readable units state the boundary directly (docs/d090). The env files are
-`%config(noreplace)` / conffiles, so upgrades do not overwrite credentials, and
-both units ship an empty `CapabilityBoundingSet` — a low port is an explicit
+`%config(noreplace)` / conffiles, so upgrades do not overwrite operator edits,
+and both units ship an empty `CapabilityBoundingSet` — a low port is an explicit
 operator drop-in, not a silent grant.
 
-The container image survives (it is still the artifact for a container host)
-but the in-process launch does not: the operator runs it with their own
-`podman run`, service manager, or systemd unit. That is why the workload API is
+The container image survives (it is still the artifact for a container host),
+packaged from the host-built binary by `go run build.go` and launched by
+`go run run.go` (d236). The in-process launch does not: the operator runs it
+with their own service manager, or systemd unit. That is why the workload API is
 no longer a dependency of this unit — the frontmatter edge is gone.

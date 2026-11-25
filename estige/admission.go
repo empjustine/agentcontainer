@@ -10,11 +10,17 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 )
 
 const (
 	eAuthHeaderName = "E-Auth"
 	authToken       = "v2"
+	// replayRingSize is d131's 64 Ki-entry single-use ring. It is consumed
+	// only by proofs that already verified, so only a peer holding a
+	// principal key can fill it; eviction after 64 Ki genuine exchanges is
+	// an accounting bound, not a clock (d104's no-clock auth law).
+	replayRingSize = 64 << 10
 )
 
 const (
@@ -118,7 +124,6 @@ func mintExitAuth(priv ed25519.PrivateKey, exitName, relayName string, nonce, re
 	return encodeEAuth(exitName, nonce, ed25519.Sign(priv, msg)), nil
 }
 
-//nolint:unparam // the exit name is signed and varies by deployment principal
 func verifyExitAuth(value string, pub ed25519.PublicKey, exitName, relayName string, relayNonce []byte) ([]byte, error) {
 	if len(relayNonce) != 16 {
 		return nil, errors.New("relay nonce must be 16 bytes")
@@ -135,4 +140,37 @@ func verifyExitAuth(value string, pub ed25519.PublicKey, exitName, relayName str
 		return nil, errors.New("exit proof signature failed")
 	}
 	return env.Nonce, nil
+}
+
+// nonceRing is one end's single-use proof cache. A nonce enters it only
+// after its signature verifies, so a forged proof cannot grow the ring.
+type nonceRing struct {
+	mu    sync.Mutex
+	seen  map[string]struct{}
+	order []string
+	head  int
+}
+
+func newNonceRing(size int) *nonceRing {
+	return &nonceRing{seen: make(map[string]struct{}, size), order: make([]string, 0, size)}
+}
+
+// consume reports whether nonce is unused and marks it consumed. The ring
+// evicts the oldest entry at capacity; no wall clock takes part.
+func (r *nonceRing) consume(nonce []byte) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	key := string(nonce)
+	if _, ok := r.seen[key]; ok {
+		return false
+	}
+	if len(r.order) == cap(r.order) {
+		delete(r.seen, r.order[r.head])
+		r.order[r.head] = key
+		r.head = (r.head + 1) % cap(r.order)
+	} else {
+		r.order = append(r.order, key)
+	}
+	r.seen[key] = struct{}{}
+	return true
 }

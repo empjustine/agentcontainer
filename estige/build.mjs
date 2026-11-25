@@ -4,17 +4,9 @@
  *
  * Three targets, and which one registers is a host fact, not a flag:
  *
- *   - Container host (podman/docker): `estige-image` — the multi-stage
- *     Containerfile (golang builder → scratch runtime that ships the CA
- *     bundle both TLS legs verify against), so the host needs NO go
- *     toolchain. The final stage is scratch on purpose: it pulls from NO
- *     registry, so the image builds even where non-docker.io registries are
- *     blocked (the gcr.io distroless base could not); only golang:1.27 on
- *     docker.io is fetched. Registered only while outbound cloud networking
- *     answers the naive probe (lib/host-capabilities.mjs): the proxy exists to
- *     relay to cloud upstreams, and against a closed network its base-image
- *     --pull would fail anyway — the gate turns that hard failure into a
- *     logged skip.
+ *   - Container image: owned by `go run build.go` after `go build .` (d236).
+ *     The Go command packages the host binary into a Debian slim image; this
+ *     builder no longer registers an image target.
  *   - No container backend: `estige-native` — the host binary direct runs
  *     use; on Termux the android/arm64 binary through lib/go-build.mjs's
  *     preset (GOOS=android — DNS resolver; see that module's header). Needs a
@@ -60,8 +52,6 @@ import {
 	isTermux,
 } from "./lib/go-build.mjs";
 import {
-	CLOUD_PROBE_CANARY,
-	cloudReachable,
 	detectContainerTool,
 } from "./lib/host-capabilities.mjs";
 
@@ -393,50 +383,9 @@ function noteGated(...names) {
 	}
 }
 
-// --- the image (container hosts) ---------------------------------------------
-if (containerTool) {
-	// Every image build goes through the explicit subcommand (`image build` /
-	// `buildx build`) rather than the backend-dependent bare `build` alias, and
-	// carries --progress=plain: default progress "auto" is tty-detected, and an
-	// agent harness often IS a pty — which renders buildah/buildx progress as
-	// overlapping redraw frames instead of appendable lines.
-	const imageBuildSubcommand =
-		containerTool === "podman" ? ["image", "build"] : ["buildx", "build"];
-	const imageBuildArgs = [...imageBuildSubcommand, "--progress=plain"];
-	// Derived from the SAME array the build runs, so the `cmd` a line is
-	// filed under cannot drift from the command that produced it.
-	const imageBuildCmd = [containerTool, ...imageBuildSubcommand].join(" ");
-	const imageTag = process.env.IMAGE_TAG ?? "localhost/estige:latest";
-
-	if (await cloudReachable()) {
-		targets.push({
-			name: "estige-image",
-			fn: async () =>
-				await run(
-					containerTool,
-					[
-						...imageBuildArgs,
-						"--pull",
-						...(force ? ["--no-cache"] : []),
-						"-f",
-						join(estigeRoot, "Containerfile"),
-						"-t",
-						imageTag,
-						estigeRoot,
-					],
-					{ name: "estige-image", cmd: imageBuildCmd },
-				),
-		});
-	} else {
-		noteGated("estige-image");
-		logWarn(
-			"skipping target — outbound cloud networking unreachable (naive probe)",
-			{ target: "estige-image", canary: CLOUD_PROBE_CANARY },
-		);
-	}
-} else {
-	noteGated("estige-image");
-}
+// The container image is owned by go run build.go (d236): the binary is
+// compiled by the host's go toolchain first, then packaged by the Go command.
+// Node only builds the native binary and the packages here.
 
 // --- the native binary (no container backend) --------------------------------
 if (containerTool) {

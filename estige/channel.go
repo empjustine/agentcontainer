@@ -12,6 +12,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"sync"
 	"time"
@@ -224,14 +225,29 @@ func newTLSTunnelStream(conn *tls.Conn, inner tunnelStream) tunnelStream {
 }
 
 func (s *tlsTunnelStream) readTunnelMsg() ([]byte, error) {
-	return readFrameFromStream(s.conn)
+	msg, err := readFrameFromStream(s.conn)
+	if err != nil && !errors.Is(err, io.EOF) && !errors.Is(err, net.ErrClosed) {
+		s.alert()
+	}
+	return msg, err
 }
 
 func (s *tlsTunnelStream) writeTunnelMsg(msg []byte) error {
 	_ = s.conn.SetWriteDeadline(time.Now().Add(tunnelKeepaliveInterval))
 	defer func() { _ = s.conn.SetWriteDeadline(time.Time{}) }()
 	_, err := s.conn.Write(msg)
+	if err != nil && !errors.Is(err, io.EOF) && !errors.Is(err, net.ErrClosed) {
+		s.alert()
+	}
 	return err
+}
+
+// alert promotes a TLS record failure into the carrier's protocol-violation
+// vocabulary. A bad record is not a clean peer disconnect: it is evidence
+// that the channel was tampered with, and the stream must die here.
+func (s *tlsTunnelStream) alert() {
+	s.inner.protocolViolation()
+	_ = s.conn.Close()
 }
 
 func (s *tlsTunnelStream) setReadDeadline(t time.Time) error { return s.conn.SetReadDeadline(t) }
@@ -248,4 +264,49 @@ func writeChannelPing(conn net.Conn) error {
 	}
 	_, err = conn.Write(msg)
 	return err
+}
+
+// windowCarrier is one HTTP window's framed byte pipe. The handshake needs a
+// stream; a window has a request body, a response body and no lifetime beyond
+// its own proof, so the functions are bound to that exchange alone.
+type windowCarrier struct {
+	readFrame  func() ([]byte, error)
+	writeFrame func([]byte) error
+	fail       func()
+	carrier    string
+	session    string
+}
+
+func (w *windowCarrier) readTunnelMsg() ([]byte, error)  { return w.readFrame() }
+func (w *windowCarrier) writeTunnelMsg(msg []byte) error { return w.writeFrame(msg) }
+func (w *windowCarrier) setReadDeadline(time.Time) error { return nil }
+func (w *windowCarrier) protocolViolation()              { w.fail() }
+func (w *windowCarrier) Close() error                    { w.fail(); return nil }
+func (w *windowCarrier) transport() string               { return w.carrier }
+func (w *windowCarrier) sessionID() string               { return w.session }
+
+// windowChannel completes one handshake over a framed window and returns the
+// frame stream the session pump uses inside it. A new window always means a
+// new handshake: a lost window must not strand the next one on a dead record
+// layer (d236).
+func windowChannel(ctx context.Context, s tunnelStream, local tls.Certificate, peer *x509.Certificate, server bool) (tunnelStream, error) {
+	var (
+		conn *tls.Conn
+		err  error
+	)
+	if server {
+		conn, err = serverChannelHandshake(ctx, s, local, []*x509.Certificate{peer})
+	} else {
+		conn, err = clientChannelHandshake(ctx, s, local, peer)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return newTLSTunnelStream(conn, s), nil
+}
+
+// tlsWireSize is a conservative bound on the carrier bytes one plaintext
+// frame becomes: TLS 1.3 adds a record header and tag per 16 KiB chunk.
+func tlsWireSize(n int) int {
+	return n + 22*(1+(n-1)/(16<<10)) + 32
 }

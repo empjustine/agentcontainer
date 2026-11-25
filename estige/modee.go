@@ -31,6 +31,8 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -61,6 +63,11 @@ const (
 	// one round trip; the relay's own keepalive PING wakes the backoff
 	// early, and any client write wakes it immediately.
 	exchangePollBackoff = 250 * time.Millisecond
+	// exchangeFlushGrace keeps a window open briefly after its outbound slot
+	// reads empty. A refusal produced just after the pump's emptiness check
+	// would otherwise be stranded in the slot while the session closes, and
+	// the relay would meet an answerless window instead of the verdict.
+	exchangeFlushGrace = 20 * time.Millisecond
 	// inboundWindowCap bounds one window's frame queue server-side: the
 	// worst client batch is exchangeWindowBytes-1 pending plus one appended
 	// max-size frame, both 64 KiB scales here — anything beyond is a peer
@@ -157,6 +164,11 @@ type h1WindowStream struct {
 	parent context.Context //nolint:containedctx // tunnelStream's methods take no context and the session outlives the request
 	client *http.Client
 	tr     *http.Transport
+	// Each exchange is its own TLS session, pinned to the same exit and
+	// carrying its own proof; no record state crosses a window boundary.
+	local tls.Certificate
+	peer  *x509.Certificate
+	conn  *tls.Conn // current exchange's inner session; nil between windows
 
 	// em serializes EXCHANGES — the stop-and-wait contract (one request in
 	// flight per session, d081) and the writer's flush path share it.
@@ -219,6 +231,8 @@ func (c *relayNode) openH1Windowed(ctx context.Context, id string, skipVerify bo
 	}
 	return &h1WindowStream{
 		url:          u.String(),
+		local:        tls.Certificate{Certificate: [][]byte{c.cfg.selfDER}, PrivateKey: c.cfg.store.Private},
+		peer:         c.cfg.store.Exits[0].Cert,
 		cfg:          &c.cfg,
 		token:        c.cfg.token,
 		traceID:      traceID,
@@ -314,7 +328,7 @@ func (w *h1WindowStream) readTunnelMsg() ([]byte, error) {
 				return nil, w.readErr(err)
 			}
 		}
-		msg, err := readFrameFromStream(w.resp.Body)
+		msg, err := readFrameFromStream(w.conn)
 		if err == nil {
 			w.curGotFrame = true
 			w.em.Unlock()
@@ -324,7 +338,9 @@ func (w *h1WindowStream) readTunnelMsg() ([]byte, error) {
 		// a clean EOF is not an error, the next window is how this carrier
 		// asks for more.
 		hadBody, gotFrame := w.curHadBody, w.curGotFrame
+		_ = w.conn.Close()
 		_ = w.resp.Body.Close()
+		w.conn = nil
 		w.resp = nil
 		close(w.exchangeDone)
 		w.exchangeDone = make(chan struct{})
@@ -360,20 +376,72 @@ func (w *h1WindowStream) startExchangeLocked() error {
 	w.pm.Unlock()
 
 	w.seq++
-	req, err := http.NewRequestWithContext(w.parent, http.MethodPost, w.url, bytes.NewReader(batch))
+	pr, pw := io.Pipe()
+	req, err := http.NewRequestWithContext(w.parent, http.MethodPost, w.url, pr)
 	if err != nil {
+		_ = pw.Close()
 		return err
 	}
-	hdr, err := w.cfg.channelHeaders()
+	hdr, nonce, err := w.cfg.channelHeaders()
 	if err != nil {
+		_ = pw.Close()
 		return err
 	}
 	maps.Copy(req.Header, hdr)
 	req.Header.Set(sessionIDHeader, w.traceID)
 	req.Header.Set("Traceparent", buildTraceparent(w.traceID, w.seq))
-	resp, err := w.client.Do(req)
+	// h1's client cannot answer a request until its body ends, so the
+	// response is parked while the handshake writes the ClientHello into
+	// that body. The exit answers 200 before reading it; the carrier's
+	// read waits for the response the dial goroutine delivers.
+	type dialResult struct {
+		resp *http.Response
+		err  error
+	}
+	dialed := make(chan dialResult, 1)
+	go func() {
+		resp, err := w.client.Do(req) //nolint:bodyclose // the response is published on w.resp and closed by the stream
+		dialed <- dialResult{resp: resp, err: err}
+	}()
+	var resp *http.Response
+	carrier := &windowCarrier{
+		writeFrame: func(msg []byte) error {
+			_, err := pw.Write(msg)
+			return err
+		},
+		fail:    func() { _ = pw.Close() },
+		carrier: carrierH1Windowed,
+		session: w.traceID,
+	}
+	carrier.readFrame = func() ([]byte, error) {
+		if resp == nil {
+			result := <-dialed
+			if result.err != nil {
+				return nil, result.err
+			}
+			resp = result.resp
+		}
+		msg, err := readFrameFromStream(resp.Body)
+		return msg, err
+	}
+	ctx, cancel := context.WithTimeout(w.parent, tunnelHandshakeTimeout)
+	conn, err := clientChannelHandshake(ctx, carrier, w.local, w.peer)
+	cancel()
 	if err != nil {
+		_ = pw.CloseWithError(err)
+		if resp != nil {
+			_ = resp.Body.Close()
+		}
 		return err
+	}
+	if resp == nil {
+		result := <-dialed
+		if result.err != nil {
+			_ = pw.Close()
+			_ = conn.Close()
+			return result.err
+		}
+		resp = result.resp
 	}
 	if resp.StatusCode != http.StatusOK {
 		// Any non-200 is the exit node refusing this window (unknown
@@ -383,8 +451,44 @@ func (w *h1WindowStream) startExchangeLocked() error {
 		// DIAL-time ladder, d077 §4).
 		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 4096))
 		_ = resp.Body.Close()
+		_ = pw.Close()
 		return fmt.Errorf("tunnel window: status %d", resp.StatusCode)
 	}
+	if err := w.cfg.verifyExitResponse(resp.Header, nonce); err != nil {
+		_ = resp.Body.Close()
+		_ = pw.Close()
+		return err
+	}
+
+	// A window ending is routine once the handshake has succeeded.
+	carrier.fail = func() {}
+	frames := bytes.NewReader(batch)
+	for {
+		msg, err := readFrameFromStream(frames)
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			_ = conn.Close()
+			_ = pw.Close()
+			_ = resp.Body.Close()
+			return err
+		}
+		if _, err := conn.Write(msg); err != nil {
+			_ = conn.Close()
+			_ = pw.Close()
+			_ = resp.Body.Close()
+			return err
+		}
+	}
+	// Ending the body is the window's commit: the exit drains to EOF, then
+	// sends this exchange's downlink frames and closes the window.
+	if err := pw.Close(); err != nil {
+		_ = conn.Close()
+		_ = resp.Body.Close()
+		return err
+	}
+	w.conn = conn
 	w.resp = resp
 	w.curHadBody = len(batch) > 0
 	w.curGotFrame = false
@@ -467,6 +571,9 @@ func (w *h1WindowStream) Close() error {
 		w.em.Lock()
 		if w.resp != nil {
 			_ = w.resp.Body.Close()
+		}
+		if w.conn != nil {
+			_ = w.conn.Close()
 		}
 		w.em.Unlock()
 		w.tr.CloseIdleConnections()
@@ -635,9 +742,9 @@ func (s *exchangeStream) endWindow() {
 // byte cap as a protocol error — never a queue that grows (VPN-R39).
 // Returns nil when the window is fully admitted; any error means the
 // session is dead.
-func (s *exchangeStream) drain(r *http.Request) error {
+func (s *exchangeStream) drain(readFrame func() ([]byte, error)) error {
 	for {
-		msg, err := readFrameFromStream(r.Body)
+		msg, err := readFrame()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				return nil // clean window end
@@ -663,27 +770,25 @@ func (s *exchangeStream) drain(r *http.Request) error {
 // write, never by this handler (stop-and-wait: holding the response open
 // for more would block the client's next request). lw is the logging
 // wrapper whose size the CLF line reads.
-func (s *exchangeStream) flushWindow(lw *loggingResponseWriter) {
-	rc := http.NewResponseController(lw)
+func (s *exchangeStream) flushWindow(write func([]byte) bool) {
+	grace := time.NewTimer(exchangeFlushGrace)
+	defer grace.Stop()
 	for {
 		select {
 		case msg := <-s.outbound:
-			// Same bound the hijacked/postStream paths take: a peer that
-			// stops draining must surface as an error, not a goroutine
-			// parked in a write (VPN-R39).
-			_ = rc.SetWriteDeadline(time.Now().Add(tunnelKeepaliveInterval))
-			_, err := lw.Write(msg)
-			if err == nil {
-				_ = rc.Flush()
-			}
-			_ = rc.SetWriteDeadline(time.Time{})
-			if err != nil {
-				_ = s.Close()
+			if !write(msg) {
 				return
 			}
 		case <-s.closed:
+			// A refusal is queued before the session closes; deliver it
+			// before honouring the close (the next window cannot).
+			select {
+			case msg := <-s.outbound:
+				_ = write(msg)
+			default:
+			}
 			return
-		default:
+		case <-grace.C:
 			return
 		}
 	}
@@ -695,7 +800,7 @@ func (s *exchangeStream) flushWindow(lw *loggingResponseWriter) {
 // admission, drain, then the response — and the CLF line is emitted for
 // EVERY window, because unlike h2-post-unbounded each exchange really is its own
 // request.
-func (t *tunnelServer) serveH1Window(w http.ResponseWriter, r *http.Request, key *operatorKey) {
+func (t *tunnelServer) serveH1Window(w http.ResponseWriter, r *http.Request, key *operatorKey, result *admissionResult, response http.Header) {
 	lw := &loggingResponseWriter{ResponseWriter: w, start: time.Now()}
 	traceID, span, err := parseTraceparent(r.Header.Get("Traceparent"))
 	if err != nil {
@@ -724,7 +829,55 @@ func (t *tunnelServer) serveH1Window(w http.ResponseWriter, r *http.Request, key
 	}
 	defer s.endWindow()
 
-	if err := s.drain(r); err != nil {
+	if err := http.NewResponseController(lw).EnableFullDuplex(); err != nil {
+		logLine(sevError, "[estige] tunnel h1.1-post-windowed: full duplex unavailable: %v", err)
+		lw.WriteHeader(http.StatusInternalServerError)
+		logAccess(r, http.StatusInternalServerError, lw.size, lw.start)
+		return
+	}
+	maps.Copy(lw.Header(), response)
+	lw.WriteHeader(http.StatusOK)
+	if err := http.NewResponseController(lw).Flush(); err != nil {
+		logAccess(r, http.StatusInternalServerError, lw.size, lw.start)
+		return
+	}
+	// An h1 intermediary may withhold response headers until the first
+	// body byte. An empty DATA frame is invisible to TLS and to the frame
+	// pump, but makes the window's open observable to the relay.
+	prime, err := encodeFrame(frameData, tunnelStreamV1, nil)
+	if err != nil {
+		_ = s.Close()
+		return
+	}
+	if err := writeWindowFrame(lw, prime); err != nil {
+		_ = s.Close()
+		return
+	}
+	local := tls.Certificate{Certificate: [][]byte{t.selfDER}, PrivateKey: t.private}
+	carrier := &windowCarrier{
+		readFrame: func() ([]byte, error) {
+			return readFrameFromStream(r.Body)
+		},
+		writeFrame: func(msg []byte) error {
+			return writeWindowFrame(lw, msg)
+		},
+		fail:    func() { _ = s.Close() },
+		carrier: carrierH1Windowed,
+		session: traceID,
+	}
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), tunnelHandshakeTimeout)
+	channel, err := windowChannel(ctx, carrier, local, result.Cert, true)
+	cancel()
+	if err != nil {
+		logLine(sevWarn, "[estige] tunnel h1.1-post-windowed: inner handshake failed: %v", err)
+		_ = s.Close()
+		logAccess(r, http.StatusOK, lw.size, lw.start)
+		return
+	}
+	carrier.fail = func() {}
+	defer func() { _ = channel.Close() }()
+
+	if err := s.drain(channel.readTunnelMsg); err != nil {
 		// A broken window means a broken session: no recovery exists past
 		// it (one stream, one life) — kill the state rather than leave a
 		// minted session waiting for windows that will never come.
@@ -735,20 +888,23 @@ func (t *tunnelServer) serveH1Window(w http.ResponseWriter, r *http.Request, key
 		// dead session would look healthy to the client and the log would
 		// disagree with the wire. This is post-auth, so a real problem body
 		// leaks no oracle (VPN-R34 governs the unauthenticated funnel only).
-		writeProblem(lw, r, http.StatusInternalServerError, "tunnel-window-failed",
-			"The tunnel could not read this window", err)
+		if lw.status == 0 {
+			writeProblem(lw, r, http.StatusInternalServerError, "tunnel-window-failed",
+				"The tunnel could not read this window", err)
+		} else {
+			writeProblemBody(lw, r, lw.status, "tunnel-window-failed",
+				"The tunnel could not read this window", err)
+		}
 		logAccess(r, http.StatusInternalServerError, lw.size, lw.start)
 		return
 	}
-	// The response headers are this window's session-open signal. No
-	// EnableFullDuplex needed (unlike h2-post-unbounded): the request body is already
-	// fully read, which is exactly why windows exist.
-	lw.WriteHeader(http.StatusOK)
-	if err := http.NewResponseController(lw).Flush(); err != nil {
-		logAccess(r, http.StatusInternalServerError, lw.size, lw.start)
-		return
-	}
-	s.flushWindow(lw)
+	s.flushWindow(func(msg []byte) bool {
+		if err := channel.writeTunnelMsg(msg); err != nil {
+			_ = s.Close()
+			return false
+		}
+		return true
+	})
 	logAccess(r, http.StatusOK, lw.size, lw.start)
 }
 

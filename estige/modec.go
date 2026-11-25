@@ -106,7 +106,7 @@ func (c *relayNode) openH2Unbounded(ctx context.Context, id string, skipVerify b
 		_ = pw.Close()
 		return nil, err
 	}
-	hdr, err := c.cfg.channelHeaders()
+	hdr, nonce, err := c.cfg.channelHeaders()
 	if err != nil {
 		_ = pw.CloseWithError(err)
 		return nil, err
@@ -137,6 +137,12 @@ func (c *relayNode) openH2Unbounded(ctx context.Context, id string, skipVerify b
 			return nil, errUnboundedRefused
 		}
 		return nil, fmt.Errorf("h2-post-unbounded: status %d", resp.StatusCode)
+	}
+	if err := c.cfg.verifyExitResponse(resp.Header, nonce); err != nil {
+		_ = resp.Body.Close()
+		_ = pw.Close()
+		tr.CloseIdleConnections()
+		return nil, err
 	}
 	if resp.ProtoMajor != 2 {
 		// Defensive demotion: the probe said h2, the session didn't get it.

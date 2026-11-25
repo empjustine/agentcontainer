@@ -1,11 +1,10 @@
 // public.go — estige public: print the config entry for an existing host key
-// (docs/d132/d169).
+// (d132/d236).
 //
-// The mirror of ssh-keygen -y: point it at a private key and it derives the
-// public half. It answers the operator's second step — "I have my key, what
-// do I hand the peer?" — as the same JSON keygen prints, so the value pastes
-// into a relay.json exit array or an exit.json relays array without
-// translation.
+// The mirror of ssh-keygen -y: point it at a private key and it prints the
+// same certificate row keygen did. The certificate is derived material, so a
+// missing or altered .crt is a hard error — silently minting a fresh one here
+// would change the pin the peer holds.
 package main
 
 import (
@@ -59,5 +58,17 @@ func publicEntryFromKeyFile(path string) (principalEntry, error) {
 	if !ok {
 		return principalEntry{}, fmt.Errorf("%s does not yield an Ed25519 public key", path)
 	}
-	return encodePrincipalEntry(name, pub)
+	certDER, err := os.ReadFile(strings.TrimSuffix(path, keygenPrivSuffix) + keygenCertSuffix)
+	if err != nil {
+		return principalEntry{}, fmt.Errorf("%s: %w", path, err)
+	}
+	cert, err := parsePrincipalCertificate(certDER)
+	if err != nil {
+		return principalEntry{}, fmt.Errorf("%s: %w", path, err)
+	}
+	certPub, ok := cert.PublicKey.(ed25519.PublicKey)
+	if !ok || !certPub.Equal(pub) {
+		return principalEntry{}, fmt.Errorf("%s does not carry this host key", path)
+	}
+	return principalEntryForCert(name, certDER), nil
 }

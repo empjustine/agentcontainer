@@ -189,6 +189,25 @@ func TestMain(m *testing.M) {
 // newTLSFront is a TLS reverse proxy to backend on the suite root: h2 at the
 // edge when enableHTTP2 (h2-post-unbounded's E2 shape), h1-only otherwise (the
 // upgrade-stripping hostile gateway the demotion ladder needs).
+// newUpgradeRefusingTLSFront is the h1 windowed carrier's hostile edge: the
+// tunnel server itself refuses upgrades while still speaking TLS directly.
+// A reverse proxy in front would buffer the open request body before it could
+// answer, which no amount of EnableFullDuplex in the backend can undo.
+func newUpgradeRefusingTLSFront(t *testing.T, backend http.Handler) *httptest.Server {
+	t.Helper()
+	front := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if headerHasToken(r.Header, "Upgrade", "websocket") {
+			http.Error(w, "upgrades are not supported", http.StatusForbidden)
+			return
+		}
+		backend.ServeHTTP(w, r)
+	}))
+	front.StartTLS()
+	front.TLS.Certificates = []tls.Certificate{testTLSCert}
+	t.Cleanup(front.Close)
+	return front
+}
+
 func newTLSFront(t *testing.T, backend *httptest.Server, enableHTTP2 bool) *httptest.Server {
 	t.Helper()
 	bu, err := url.Parse(backend.URL)
@@ -325,7 +344,7 @@ func testV5Headers(t *testing.T) http.Header {
 	if err != nil {
 		t.Fatal(err)
 	}
-	hdr, err := channelRequestHeaders(store.Private, store.Principal, store.Exits[0].Name, store.SelfDER)
+	hdr, _, err := channelRequestHeaders(store.Private, store.Principal, store.Exits[0].Name, store.SelfDER)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -548,3 +548,36 @@ func TestOperatorKeysFromEnv(t *testing.T) {
 // never a token; revoking one principal rejects only that one; and a tampered
 // token for a real id answers byte-identically to no credential at all
 // (VPN-R34 — the response must not distinguish which check failed).
+
+// The exit authenticates itself on every admitted response, not just the
+// relay's request: the 101 carries a fresh blind proof bound to the relay's
+// nonce and the exit's pinned certificate.
+func TestTunnelResponseCarriesExitProof(t *testing.T) {
+	s := newTunnelServer(t, true, egressConfig{})
+	proxy := newHTTPServer(t, s)
+	tunnelURL := mustTunnelURL(t, proxy)
+	store, err := loadRelayStore(storeRoot())
+	if err != nil {
+		t.Fatal(err)
+	}
+	hdr, nonce, err := channelRequestHeaders(
+		store.Private, store.Principal, store.Exits[0].Name, store.SelfDER,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hdr.Set(sessionIDHeader, "exit-proof-test")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	ws, err := wsDial(ctx, tunnelURL, hdr, nil, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ws.Close()
+	if ws.respHeader.Get(eAuthHeaderName) == "" || ws.respHeader.Get(ePubHeaderName) == "" {
+		t.Fatalf("101 carried no exit proof: %v", ws.respHeader)
+	}
+	if err := verifyExitResponse(ws.respHeader, store, tunnelURL.Host, newNonceRing(4), nonce); err != nil {
+		t.Fatalf("exit proof on the 101 did not verify: %v", err)
+	}
+}

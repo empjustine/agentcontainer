@@ -27,6 +27,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"os"
 	"strings"
@@ -83,6 +84,7 @@ func (k *operatorKey) policyOr(def *egressPolicy) *egressPolicy {
 type tunnelServer struct {
 	keys      []operatorKey
 	admission admissionTrust
+	replay    *nonceRing
 	principal string
 	selfDER   []byte
 	private   ed25519.PrivateKey
@@ -187,7 +189,7 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request, h2Unb
 	}
 	// Factor 1 first: an unknown credential must not even learn whether
 	// /<prefix>/vpn exists as a route (VPN-R12: rejected before any 101).
-	result, err := validateRelayAdmission(r.Header.Values(eAuthHeaderName), r.Header.Values(ePubHeaderName), t.admission, t.principal)
+	result, err := validateRelayAdmission(r.Header.Values(eAuthHeaderName), r.Header.Values(ePubHeaderName), t.admission, t.principal, t.replay)
 	if err != nil {
 		if untrusted, ok := errors.AsType[*untrustedPeerError](err); ok {
 			_ = logSeenHost(roleExit, "", untrusted.Name, untrusted.Public)
@@ -198,6 +200,12 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request, h2Unb
 	key := t.keyByName(result.Name)
 	if key == nil {
 		writeFunnel404(w, r)
+		return
+	}
+	response, err := admissionResponse(t.private, t.principal, t.selfDER, &result)
+	if err != nil {
+		writeProblem(w, r, http.StatusInternalServerError, "admission-response-failed",
+			"Could not answer the tunnel admission", err)
 		return
 	}
 	// The correlation id is per-session diagnostic metadata (docs/d106):
@@ -220,19 +228,19 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request, h2Unb
 	// its own).
 	if r.Method == http.MethodPost && !headerHasToken(r.Header, "Upgrade", "websocket") {
 		if r.Header.Get(windowHeader) != "" {
-			t.serveH2Window(w, r, key)
+			t.serveH2Window(w, r, key, &result, response)
 			return
 		}
 		if r.Header.Get("Traceparent") != "" {
-			t.serveH1Window(w, r, key)
+			t.serveH1Window(w, r, key, &result, response)
 			return
 		}
-		t.serveH2Unbounded(w, r, key, id, h2UnboundedRefused, &result)
+		t.serveH2Unbounded(w, r, key, id, h2UnboundedRefused, &result, response)
 		return
 	}
 	// Factor 2: the request must actually be a v13 websocket upgrade with a
 	// well-formed key; anything else is not a tunnel request at all.
-	resp, err := wsAccept(r)
+	resp, err := wsAccept(r, response)
 	if err != nil {
 		writeFunnel404(w, r)
 		return
@@ -285,7 +293,7 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request, h2Unb
 // handler must stay alive for the whole session — returning would end the
 // response body that carries it. Attribution happens at the same point the
 // 101 path does it: after auth, before any session work (docs/d078 §5).
-func (t *tunnelServer) serveH2Unbounded(w http.ResponseWriter, r *http.Request, key *operatorKey, id string, refused bool, peer *admissionResult) {
+func (t *tunnelServer) serveH2Unbounded(w http.ResponseWriter, r *http.Request, key *operatorKey, id string, refused bool, peer *admissionResult, response http.Header) {
 	lw := &loggingResponseWriter{ResponseWriter: w, start: time.Now()}
 	// The port decides, not a per-request header (docs/d222): the exit
 	// serves an edge whose connector caps a single request body, and on that
@@ -318,6 +326,7 @@ func (t *tunnelServer) serveH2Unbounded(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
+	maps.Copy(lw.Header(), response)
 	lw.WriteHeader(http.StatusOK)
 	if err := http.NewResponseController(lw).Flush(); err != nil {
 		// Headers never made it out: the session cannot exist. The status
@@ -606,6 +615,7 @@ func (s *server) enableTunnel(egress egressConfig) error {
 	s.vpn = &tunnelServer{
 		keys:      keys,
 		admission: trustFromExitStore(store),
+		replay:    newNonceRing(replayRingSize),
 		principal: store.Principal,
 		selfDER:   store.SelfDER,
 		private:   store.Private,

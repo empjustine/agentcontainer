@@ -356,14 +356,13 @@ func TestRelayChainHTTPProxyCarriesTunnel(t *testing.T) {
 func TestRelayChainSOCKS5ProxyCarriesTunnelModeE(t *testing.T) {
 	upstream := newChainUpstream(t)
 	upPort := portOf(t, upstream.Listener.Addr().String())
-	backend := h1PostWindowedTestServer(t, upstream)
-	gateway := newHostileGateway(t, backend)
+	backend := h1PostWindowedTestBackend(t, upstream)
 
 	socksAddr, targets := newSOCKS5ChainProxy(t, false)
 	clearChainEnv(t)
 	t.Setenv("SOCKS_SERVER", socksAddr)
 
-	front := newTLSFront(t, gateway, false)
+	front := newUpgradeRefusingTLSFront(t, backend)
 	httpAddr, stop := wireRelayNode(t, front.URL+tunnelPath)
 	defer stop()
 	logBuf := captureLog(t)

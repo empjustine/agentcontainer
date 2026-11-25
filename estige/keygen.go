@@ -1,18 +1,14 @@
-// keygen.go — estige keygen: the host identity's key material (docs/d132).
+// keygen.go — estige keygen: the host identity's key material (d132/d236).
 //
-// WHY one key pair and no certificate yet: d169's channel layer mints a
-// self-signed certificate over this key, and the certificate is *derived*
-// material — the key is the durable fact, the certificate can be re-minted
-// from it. Keeping them apart keeps the one file that must never leave the
-// host (VPN-R32) separate from the one that is public by definition.
+// WHY the certificate is derived at mint time: d236 pins the certificate, not
+// the bare key, so the {name, public} entry an operator pastes into a peer's
+// store is the certificate's DER. The private key is the durable fact and the
+// only file that never leaves the host (VPN-R32); a re-mint is a pin change.
 //
-// WHY the private file is named for the principal (docs/d132's identity
-// rule): the basename is the security principal a peer's store names, so
-// there is one spelling per identity and no config field can desync it. The
-// wire name is a separate decision — d211 makes it a neutral constant so the
-// SNI discloses nothing. The public half has no file: it is the
-// {"name","public"} entry a relay.json exit array or an exit.json relays
-// array holds, printed by keygen and by estige public.
+// WHY the private file is named for the principal (d132's identity rule): the
+// basename is the security principal a peer's store names, so there is one
+// spelling per identity and no config field can desync it. The wire name is a
+// fixed neutral constant so the SNI discloses nothing (d236).
 package main
 
 import (
@@ -37,8 +33,8 @@ const (
 	keygenCertSuffix = ".crt"
 	keygenDirPerm    = 0o700
 	keygenPrivPerm   = 0o600
-	// principalMaxLen is d132's name grammar upper bound; the certificate SAN
-	// and ServerName reuse the same string (docs/d169).
+	// principalMaxLen is d132's name grammar upper bound for disk and wire
+	// principals; the certificate's SAN is the fixed d236 wire name.
 	principalMaxLen = 64
 )
 
@@ -99,16 +95,17 @@ func keygen(dir, principal string, force bool) (privPath string, entry principal
 
 	privPath = filepath.Join(prvDir, principal+keygenPrivSuffix)
 
-	pub, priv, err := ed25519.GenerateKey(rand.Reader)
+	_, priv, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		return "", principalEntry{}, "", err
 	}
-	// Build the entry before touching the disk: a failure after the private
-	// key lands would leave an identity the operator has no printed record of.
-	entry, err = encodePrincipalEntry(principal, pub)
+	certDER, err := mintPrincipalCertificate(priv, time.Now())
 	if err != nil {
 		return "", principalEntry{}, "", err
 	}
+	// Build the entry before touching the disk: a failure after the key lands
+	// would leave an identity the operator has no printed record of.
+	entry = principalEntryForCert(principal, certDER)
 	privDER, err := x509.MarshalPKCS8PrivateKey(priv)
 	if err != nil {
 		return "", principalEntry{}, "", err
@@ -116,28 +113,22 @@ func keygen(dir, principal string, force bool) (privPath string, entry principal
 	if err := writePrivateKey(privPath, privDER, force); err != nil {
 		return "", principalEntry{}, "", err
 	}
-	certDER, err := mintPrincipalCertificate(priv, time.Now())
-	if err != nil {
-		return "", principalEntry{}, "", err
-	}
 	certPath := filepath.Join(prvDir, principal+keygenCertSuffix)
 	if err := os.WriteFile(certPath, certDER, keygenPrivPerm); err != nil {
 		return "", principalEntry{}, "", err
 	}
+	pub, ok := priv.Public().(ed25519.PublicKey)
+	if !ok {
+		return "", principalEntry{}, "", errors.New("host key does not yield an Ed25519 public key")
+	}
 	return privPath, entry, principalFingerprint(pub), nil
 }
 
-// encodePrincipalEntry builds the {name, public} fact cluster. The public
-// value is the SPKI DER in ONE line of unpadded base64url — no PEM armor, no
-// 72-column wrapping, nothing an SSH tool would claim — so it drops into JSON
-// without escapes and without a scalar hiding line breaks (docs/d132). It is
-// 44 bytes for Ed25519, 59 base64url characters.
-func encodePrincipalEntry(name string, pub ed25519.PublicKey) (principalEntry, error) {
-	spki, err := x509.MarshalPKIXPublicKey(pub)
-	if err != nil {
-		return principalEntry{}, err
-	}
-	return principalEntry{Name: name, Public: base64.RawURLEncoding.EncodeToString(spki)}, nil
+// principalEntryForCert builds the {name, public} row. d236 pins the host
+// certificate, so public is its DER in one line of unpadded base64url — no
+// PEM armor and no wrapping, which would hide a scalar line break in JSON.
+func principalEntryForCert(name string, certDER []byte) principalEntry {
+	return principalEntry{Name: name, Public: encodeEPub(certDER)}
 }
 
 // writePrincipalEntry prints the entry as indented JSON, which is what the

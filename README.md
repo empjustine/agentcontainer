@@ -146,7 +146,6 @@ agentcontainer/
 │   ├── settings.json                    #   → static pi settings (generator installs into PI_CODING_AGENT_DIR)
 │   ├── mcp.json                         #   → committed default MCP servers, merged into the agent dir (docs/d061)
 │   ├── config.toml                      #   → mise configuration (includes cline and thinkrail)
-│   ├── Containerfile                    #   → container image build
 │   ├── *.md                             #   → this unit's own living docs (d117): DESIGN, plus coding-harness-persistence (scoped-models-and-proxy-overrides is archived)
 │   ├── lib/                             #   → THIS FOLDER's own copy (d113), the largest: workload-runtime.mjs (the workload_* API in node, no jq on the host), log.mjs, artifact.mjs, canonical-json.mjs, host-capabilities.mjs, cloud-providers.mjs/.json (the full table); the interpreter runners are repo-root (d138)
 │   └── tests/                           #   → this folder's own tests (canonicalization, committed-manifest guard (d050), catalog ordering, URL forms, modality gate, cost map, launcher argv + workload rendering, the jq-free guard)

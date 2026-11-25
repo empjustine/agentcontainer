@@ -44,7 +44,7 @@ func TestWSAcceptValidatesUpgrade(t *testing.T) {
 			},
 		}
 	}
-	if _, err := wsAccept(valid()); err != nil {
+	if _, err := wsAccept(valid(), nil); err != nil {
 		t.Fatalf("valid upgrade rejected: %v", err)
 	}
 
@@ -58,7 +58,7 @@ func TestWSAcceptValidatesUpgrade(t *testing.T) {
 	for name, mutate := range mutations {
 		r := valid()
 		mutate(r)
-		if _, err := wsAccept(r); !errors.Is(err, ErrProtocol) {
+		if _, err := wsAccept(r, nil); !errors.Is(err, ErrProtocol) {
 			t.Errorf("%s: expected ErrProtocol, got %v", name, err)
 		}
 	}

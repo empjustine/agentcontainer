@@ -1,8 +1,8 @@
 package main
 
 // keygen_test.go — pins the host identity contract: the principal-named DER
-// private key and its mode, the single-line base64url SPKI entry, and the
-// refusal to replace a live key (docs/d132's rotate-don't-move).
+// private key and its mode, the single-line base64url certificate entry, and
+// the refusal to replace a live key (d132's rotate-don't-move, d236's pin).
 
 import (
 	"bytes"
@@ -48,26 +48,20 @@ func TestKeygenWritesHostIdentity(t *testing.T) {
 		t.Fatalf("public half is %T, want ed25519.PublicKey", priv.Public())
 	}
 
-	spki, err := base64.RawURLEncoding.DecodeString(entry.Public)
+	entryDER, err := base64.RawURLEncoding.DecodeString(entry.Public)
 	if err != nil {
 		t.Fatalf("entry public is not raw base64url: %v", err)
-	}
-	if len(spki) != 44 {
-		t.Fatalf("SPKI length = %d, want 44", len(spki))
 	}
 	if strings.ContainsAny(entry.Public, "+/=") {
 		t.Fatalf("entry public carries standard-base64 or padding characters: %q", entry.Public)
 	}
-	parsedPub, err := x509.ParsePKIXPublicKey(spki)
+	entryCert, err := parsePrincipalCertificate(entryDER)
 	if err != nil {
-		t.Fatalf("entry public is not a SPKI: %v", err)
+		t.Fatalf("entry public is not a host certificate: %v", err)
 	}
-	entryPub, ok := parsedPub.(ed25519.PublicKey)
-	if !ok {
-		t.Fatalf("entry SPKI holds %T, want ed25519.PublicKey", parsedPub)
-	}
-	if !entryPub.Equal(pub) {
-		t.Fatalf("entry public does not match the private key")
+	entryPub, ok := entryCert.PublicKey.(ed25519.PublicKey)
+	if !ok || !entryPub.Equal(pub) {
+		t.Fatalf("entry certificate does not carry the host key")
 	}
 
 	if want := "SHA256:" + base64.RawURLEncoding.EncodeToString(sum256(pub)); fingerprint != want {
@@ -162,4 +156,20 @@ func assertPerm(t *testing.T, path string, want os.FileMode) {
 func sum256(pub ed25519.PublicKey) []byte {
 	sum := sha256.Sum256(pub)
 	return sum[:]
+}
+
+func TestKeyCheckLoadsBothRoleStores(t *testing.T) {
+	role, peers, err := checkStore(storeRoot())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if role != "exit" || peers < 1 {
+		t.Fatalf("checkStore = (%q, %d), want an exit store with a peer", role, peers)
+	}
+}
+
+func TestKeyCheckRefusesEmptyStore(t *testing.T) {
+	if _, _, err := checkStore(t.TempDir()); err == nil {
+		t.Fatal("key check accepted a store with no role files")
+	}
 }

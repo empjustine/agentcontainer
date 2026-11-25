@@ -18,6 +18,8 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"io"
@@ -64,10 +66,10 @@ func parseWindowBound(raw string) (int64, error) {
 // h1.1-post-windowed carrier's drain it runs concurrently with the response,
 // which is the whole point of this carrier: the relay's reads of the target
 // are not held behind a full request body.
-func (s *exchangeStream) drainBound(r *http.Request, bound int64) error {
+func (s *exchangeStream) drainBound(readFrame func() ([]byte, error), bound int64) error {
 	var window int64
 	for {
-		msg, err := readFrameFromStream(r.Body)
+		msg, err := readFrame()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				return nil
@@ -90,11 +92,24 @@ func (s *exchangeStream) drainBound(r *http.Request, bound int64) error {
 	}
 }
 
+// writeWindowFrame writes one frame into a window's response body with the
+// same write bound every carrier takes.
+func writeWindowFrame(w http.ResponseWriter, msg []byte) error {
+	rc := http.NewResponseController(w)
+	_ = rc.SetWriteDeadline(time.Now().Add(tunnelKeepaliveInterval))
+	_, err := w.Write(msg)
+	if err == nil {
+		err = rc.Flush()
+	}
+	_ = rc.SetWriteDeadline(time.Time{})
+	return err
+}
+
 // serveH2Window runs one h2-post-windowed window: open the response
 // immediately, then pump both directions until the relay ends the window's
 // body. The session outlives the handler in the registry, so the next window
 // continues it.
-func (t *tunnelServer) serveH2Window(w http.ResponseWriter, r *http.Request, key *operatorKey) {
+func (t *tunnelServer) serveH2Window(w http.ResponseWriter, r *http.Request, key *operatorKey, result *admissionResult, response http.Header) {
 	lw := &loggingResponseWriter{ResponseWriter: w, start: time.Now()}
 	traceID, span, err := parseTraceparent(r.Header.Get("Traceparent"))
 	if err != nil {
@@ -129,20 +144,39 @@ func (t *tunnelServer) serveH2Window(w http.ResponseWriter, r *http.Request, key
 		logAccess(r, http.StatusInternalServerError, lw.size, lw.start)
 		return
 	}
+	maps.Copy(lw.Header(), response)
 	lw.WriteHeader(http.StatusOK)
 	if err := http.NewResponseController(lw).Flush(); err != nil {
 		logAccess(r, http.StatusInternalServerError, lw.size, lw.start)
 		return
 	}
 
+	local := tls.Certificate{Certificate: [][]byte{t.selfDER}, PrivateKey: t.private}
+	carrier := &windowCarrier{
+		readFrame:  func() ([]byte, error) { return readFrameFromStream(r.Body) },
+		writeFrame: func(msg []byte) error { return writeWindowFrame(lw, msg) },
+		fail:       func() { _ = s.Close() },
+		carrier:    carrierH2Windowed,
+		session:    traceID,
+	}
+	channel, err := windowChannel(context.WithoutCancel(r.Context()), carrier, local, result.Cert, true)
+	if err != nil {
+		logLine(sevWarn, "[estige] tunnel h2-post-windowed: inner handshake failed: %v", err)
+		_ = s.Close()
+		logAccess(r, http.StatusOK, lw.size, lw.start)
+		return
+	}
+	carrier.fail = func() {}
+	defer func() { _ = channel.Close() }()
+
 	drained := make(chan error, 1)
-	go func() { drained <- s.drainBound(r, bound) }()
+	go func() { drained <- s.drainBound(channel.readTunnelMsg, bound) }()
 	// No r.Body.Close here: net/http's body Close takes the same mutex the
 	// blocked drain read holds, and the session-close path (client went away)
 	// is the one that ends that read. The handler returning is enough — the
 	// response is what the relay is waiting for.
 
-	if err := s.flushH2Window(lw, drained); err != nil {
+	if err := s.flushH2Window(drained, channel.writeTunnelMsg); err != nil {
 		_ = s.Close()
 		// A body that ends on a frame boundary closes the session normally;
 		// the relay's Close can truncate the very last frame, which is an
@@ -158,17 +192,7 @@ func (t *tunnelServer) serveH2Window(w http.ResponseWriter, r *http.Request, key
 // ends the response when that body ends so the relay can open the next
 // window. Ending the response is the window handoff: holding it open would
 // make the relay's next POST inadmissible under the one-window contract.
-func (s *exchangeStream) flushH2Window(lw *loggingResponseWriter, drained <-chan error) error {
-	rc := http.NewResponseController(lw)
-	write := func(msg []byte) error {
-		_ = rc.SetWriteDeadline(time.Now().Add(tunnelKeepaliveInterval))
-		_, err := lw.Write(msg)
-		if err == nil {
-			err = rc.Flush()
-		}
-		_ = rc.SetWriteDeadline(time.Time{})
-		return err
-	}
+func (s *exchangeStream) flushH2Window(drained <-chan error, write func([]byte) error) error {
 	for {
 		select {
 		case msg := <-s.outbound:
@@ -213,6 +237,11 @@ type h2WindowedStream struct {
 
 	client *http.Client
 	tr     *http.Transport
+	// local and peer pin this window's inner session. Every window gets a
+	// fresh handshake; no TLS state survives the response body's end.
+	local tls.Certificate
+	peer  *x509.Certificate
+	conn  *tls.Conn // current window's inner session; nil while it rotates
 	// ctx is the SESSION lifetime, not a request value: every window derives
 	// its request from it and Close cancels it, which is the one way an
 	// in-flight window ends when the relay abandons the CONNECT.
@@ -246,6 +275,8 @@ func (c *relayNode) openH2Windowed(ctx context.Context, id string, skipVerify bo
 	sctx, cancel := context.WithCancel(context.WithoutCancel(ctx))
 	w := &h2WindowedStream{
 		url:    u.String(),
+		local:  tls.Certificate{Certificate: [][]byte{c.cfg.selfDER}, PrivateKey: c.cfg.store.Private},
+		peer:   c.cfg.store.Exits[0].Cert,
 		cfg:    &c.cfg,
 		token:  c.cfg.token,
 		id:     id,
@@ -287,7 +318,7 @@ func (w *h2WindowedStream) openWindow() error {
 		_ = pw.Close()
 		return err
 	}
-	hdr, err := w.cfg.channelHeaders()
+	hdr, nonce, err := w.cfg.channelHeaders()
 	if err != nil {
 		_ = pw.CloseWithError(err)
 		return err
@@ -296,7 +327,7 @@ func (w *h2WindowedStream) openWindow() error {
 	req.Header.Set(sessionIDHeader, w.id)
 	req.Header.Set("Traceparent", buildTraceparent(w.id, seq))
 	req.Header.Set(windowHeader, strconv.FormatInt(w.bound, 10))
-	resp, err := w.client.Do(req)
+	resp, err := w.client.Do(req) //nolint:bodyclose // the response is published on w.resp and closed by the stream
 	if err != nil {
 		_ = pw.CloseWithError(err)
 		return err
@@ -306,6 +337,11 @@ func (w *h2WindowedStream) openWindow() error {
 		_ = resp.Body.Close()
 		_ = pw.Close()
 		return fmt.Errorf("h2-post-windowed: status %d", resp.StatusCode)
+	}
+	if err := w.cfg.verifyExitResponse(resp.Header, nonce); err != nil {
+		_ = resp.Body.Close()
+		_ = pw.Close()
+		return err
 	}
 
 	w.mu.Lock()
@@ -319,6 +355,41 @@ func (w *h2WindowedStream) openWindow() error {
 	w.body = pw
 	w.resp = resp.Body
 	w.sent = 0
+	w.cond.Broadcast()
+	w.mu.Unlock()
+
+	// The handshake runs on the window itself: its ClientHello and the
+	// exit's ServerHello are framed bytes in this one exchange. A peer that
+	// cannot complete it takes the session down here, before any frame.
+	carrier := &windowCarrier{
+		readFrame: func() ([]byte, error) { return readFrameFromStream(resp.Body) },
+		writeFrame: func(msg []byte) error {
+			w.mu.Lock()
+			w.sent += int64(len(msg))
+			w.mu.Unlock()
+			_, err := pw.Write(msg)
+			return err
+		},
+		fail:    func() { _ = w.Close() },
+		carrier: carrierH2Windowed,
+		session: w.id,
+	}
+	conn, err := clientChannelHandshake(w.ctx, carrier, w.local, w.peer)
+	if err != nil {
+		_ = pw.CloseWithError(err)
+		_ = resp.Body.Close()
+		w.mu.Lock()
+		w.body, w.resp, w.conn = nil, nil, nil
+		w.err = err
+		w.cond.Broadcast()
+		w.mu.Unlock()
+		return err
+	}
+	// Past the handshake a window ending is routine. Closing the TLS conn
+	// must not reach back through the carrier and kill the whole session.
+	carrier.fail = func() {}
+	w.mu.Lock()
+	w.conn = conn
 	w.cond.Broadcast()
 	w.mu.Unlock()
 	return nil
@@ -337,29 +408,25 @@ func (w *h2WindowedStream) writeTunnelMsg(msg []byte) error {
 			w.mu.Unlock()
 			return err
 		}
-		if w.body == nil {
+		if w.conn == nil {
 			w.cond.Wait()
 			continue
 		}
-		if w.sent > 0 && w.sent+int64(len(msg)) > w.bound {
-			// The window is full: end its body and wait for the read loop to
-			// open the next one (the exit ends the response once it sees this
-			// body's EOF).
+		// Rotate BEFORE writing: a TLS record cannot be split across two
+		// windows, and a session never spans them (d236).
+		if w.sent > 0 && w.sent+int64(tlsWireSize(len(msg))) > w.bound {
+			old := w.conn
 			_ = w.body.Close()
-			w.body = nil
+			w.body, w.conn = nil, nil
+			w.mu.Unlock()
+			_ = old.Close()
+			w.mu.Lock()
 			continue
 		}
-		pw := w.body
-		w.sent += int64(len(msg))
+		conn := w.conn
 		w.mu.Unlock()
-		_, err := pw.Write(msg)
-		w.mu.Lock()
-		if err != nil {
-			w.mu.Unlock()
-			return errWSClosed
-		}
-		w.mu.Unlock()
-		return nil
+		_, err := conn.Write(msg)
+		return err
 	}
 }
 
@@ -371,31 +438,35 @@ func (w *h2WindowedStream) readTunnelMsg() ([]byte, error) {
 			w.mu.Unlock()
 			return nil, err
 		}
+		conn := w.conn
 		body := w.resp
 		w.mu.Unlock()
-		if body == nil {
+		if conn == nil {
 			w.mu.Lock()
 			w.cond.Wait()
 			w.mu.Unlock()
 			continue
 		}
-		msg, err := readFrameFromStream(body)
+		msg, err := readFrameFromStream(conn)
 		if err == nil {
 			return msg, nil
 		}
 		w.mu.Lock()
+		if w.conn == conn {
+			w.conn = nil
+		}
 		if w.resp == body {
 			w.resp = nil
 		}
-		// A response ending while its body is still open is not a clean
-		// window end: close the body so a late frame cannot land in the next
-		// window's sequence.
 		if w.body != nil {
 			_ = w.body.Close()
 			w.body = nil
 		}
 		w.mu.Unlock()
-		_ = body.Close()
+		_ = conn.Close()
+		if body != nil {
+			_ = body.Close()
+		}
 		if !errors.Is(err, io.EOF) {
 			return nil, w.readErr(err)
 		}
@@ -448,6 +519,8 @@ func (w *h2WindowedStream) Close() error {
 		w.body = nil
 		resp := w.resp
 		w.resp = nil
+		conn := w.conn
+		w.conn = nil
 		w.cond.Broadcast()
 		w.mu.Unlock()
 		if body != nil {
@@ -455,6 +528,9 @@ func (w *h2WindowedStream) Close() error {
 		}
 		if resp != nil {
 			_ = resp.Close()
+		}
+		if conn != nil {
+			_ = conn.Close()
 		}
 		w.timerMu.Lock()
 		if w.readTimer != nil {
