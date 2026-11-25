@@ -20,14 +20,6 @@ import (
 // either may be presented until the old one is removed.
 type admissionTrust map[string][]*x509.Certificate
 
-func trustFromRelayStore(store *relayStore) admissionTrust {
-	trust := make(admissionTrust, len(store.Exits))
-	for _, entry := range store.Exits {
-		trust[entry.Name] = append(trust[entry.Name], entry.Cert)
-	}
-	return trust
-}
-
 func trustFromExitStore(store *exitStore) admissionTrust {
 	trust := make(admissionTrust, len(store.Relays))
 	for _, entry := range store.Relays {

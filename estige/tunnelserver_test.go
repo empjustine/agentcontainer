@@ -491,7 +491,8 @@ func TestSessionResponsesCarryExitProofAndForbidCaching(t *testing.T) {
 		assertUncacheable(t, ws.respHeader)
 		if err := validateExitAdmission(
 			ws.respHeader.Values(eExitAuthHeader), ws.respHeader.Values(ePubHeader),
-			trustFromRelayStore(store), store.Exits[0].Name, store.Principal, nonce, newNonceRing(4),
+			admissionTrust{store.Exits[0].Name: {store.Exits[0].Cert}},
+			store.Exits[0].Name, store.Principal, nonce, newNonceRing(4),
 		); err != nil {
 			t.Fatalf("101 proof: %v", err)
 		}

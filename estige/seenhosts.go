@@ -9,10 +9,50 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 )
 
 const eventSeenHosts = "seen_hosts"
+
+// The hint is operator evidence, not an event log: a well-formed but
+// unpublished certificate can be minted by anyone, and the exit's path is
+// Funnel-public, so every request would otherwise cost one warn line with
+// ~1.1 KB of attacker-chosen public material. Repeats inside the window are
+// dropped, and the map is swept at its cap so the dedupe itself cannot grow.
+const (
+	seenHostWindow = time.Minute
+	seenHostCap    = 256
+)
+
+var seenHostRecent = struct {
+	mu   sync.Mutex
+	last map[string]time.Time
+}{last: make(map[string]time.Time, seenHostCap)}
+
+// seenHostSuppressed reports whether this peer's hint was already logged
+// within the window, recording it when it was not.
+func seenHostSuppressed(role, name, public string) bool {
+	key := role + "\x00" + name + "\x00" + public
+	now := time.Now()
+	seenHostRecent.mu.Lock()
+	defer seenHostRecent.mu.Unlock()
+	if at, ok := seenHostRecent.last[key]; ok && now.Sub(at) < seenHostWindow {
+		return true
+	}
+	if len(seenHostRecent.last) >= seenHostCap {
+		for seenKey, at := range seenHostRecent.last {
+			if now.Sub(at) >= seenHostWindow {
+				delete(seenHostRecent.last, seenKey)
+			}
+		}
+		if len(seenHostRecent.last) >= seenHostCap {
+			return true
+		}
+	}
+	seenHostRecent.last[key] = now
+	return false
+}
 
 type seenHostEntry struct {
 	Endpoint string `json:"endpoint,omitempty"`
@@ -43,6 +83,9 @@ func logSeenHost(role, endpoint, name, public string) error {
 	}
 	if role == roleExit {
 		endpoint = ""
+	}
+	if seenHostSuppressed(role, name, public) {
+		return nil
 	}
 	record := seenHostRecord{
 		TS:             time.Now().UnixMilli(),

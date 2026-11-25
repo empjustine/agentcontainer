@@ -76,6 +76,14 @@ v5 (d108's table states what shipped). Read `X-Relay-Proof` below as
 `e-relay-auth` and `X-Exit-Proof` as `e-exit-auth`; the signed labels stay
 `estige/v2/…` because they version the envelope, not the deployment.
 
+One sentence below is unachievable as written: "a credential the exit refused
+does not demote the transport ladder". In v5 the exit's refusal is the
+camouflage 404, byte-identical to a missing path and to a carrier failure by
+design (VPN-R34), so the relay _cannot_ tell a stale credential from a dead
+carrier and the ladder demotes, failing closed at the last rung. What is
+terminal is the other direction: the relay's own verification of the exit's
+proof stops the dial immediately, because there the relay holds the evidence.
+
 ## Mechanism — single-flight mutual Ed25519 proofs
 
 Single-use nonce-bound signatures: no clock, no window, no TOTP-style

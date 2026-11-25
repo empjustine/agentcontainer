@@ -109,3 +109,43 @@ func TestSeenHostRejects(t *testing.T) {
 		})
 	}
 }
+
+// TestSeenHostIsThrottled: the event is evidence, not an amplifier — a repeat
+// from the same peer inside the window is dropped, a different peer still
+// logs, and the dedupe window expires so a genuine later attempt is visible.
+func TestSeenHostIsThrottled(t *testing.T) {
+	capture := captureSeen(t)
+	public := seenCert(t)
+	first := time.Now()
+	if err := logSeenHost(roleExit, "", "relay_bazzite", public); err != nil {
+		t.Fatal(err)
+	}
+	emitted := capture.text
+	if emitted == "" {
+		t.Fatal("the first hint was not emitted")
+	}
+	if err := logSeenHost(roleExit, "", "relay_bazzite", public); err != nil {
+		t.Fatal(err)
+	}
+	if capture.text != emitted {
+		t.Fatal("a repeated hint inside the window was emitted again")
+	}
+	other := seenCert(t)
+	if err := logSeenHost(roleExit, "", "relay_laptop", other); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(capture.text, "relay_laptop") {
+		t.Fatal("a different peer's hint was suppressed")
+	}
+	// Age the record past the window: the same peer becomes visible again.
+	key := roleExit + "\x00" + "relay_bazzite" + "\x00" + public
+	seenHostRecent.mu.Lock()
+	seenHostRecent.last[key] = first.Add(-2 * seenHostWindow)
+	seenHostRecent.mu.Unlock()
+	if err := logSeenHost(roleExit, "", "relay_bazzite", public); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(capture.text, "relay_bazzite") {
+		t.Fatal("an expired hint was not re-emitted")
+	}
+}

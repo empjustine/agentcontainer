@@ -119,6 +119,16 @@ intermediary must never reuse or store the response for another request. The
 camouflage 404 stays byte-identical and gains nothing (VPN-R34).
 
 A valid `e-pub` that is not in the local trust set also fails the connection.
+The hint it earns is bounded: a repeat from the same peer inside a one-minute
+window is dropped (and the dedupe table is swept at its cap), so an
+unauthenticated Funnel peer cannot turn the event into a warning amplifier by
+minting a fresh certificate per request.
+
+The two refusals are not symmetric, and only one is terminal. The relay's own
+check of the exit's proof stops the dial at the rung it failed on. The exit's
+refusal of the relay's proof is the camouflage 404 — indistinguishable from a
+dead carrier (VPN-R34) — so the relay demotes and fails closed at the last
+rung rather than guessing.
 It emits the `seen_hosts` event unconditionally, whether the trusted set is
 empty or not. That event is a hint for an operator; it never grants trust.
 

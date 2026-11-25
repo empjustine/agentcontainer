@@ -109,16 +109,12 @@ func TestValidateRelayAdmissionFailures(t *testing.T) {
 	}
 }
 
-func TestTrustMapsFromStores(t *testing.T) {
+func TestTrustMapFromTheExitStore(t *testing.T) {
 	cert := relayCertFromDER(t, admissionMaterial(t, testHostKey(t)))
-	relay := &relayStore{Exits: []storeKeyEntry{{Name: "exit-home", Cert: cert}}}
 	var relayRow relayPeerEntry
 	relayRow.Name = "relay_bazzite"
 	relayRow.Cert = cert
 	exit := &exitStore{Relays: []relayPeerEntry{relayRow}}
-	if pinnedCertificate(trustFromRelayStore(relay), "exit-home", cert) == nil {
-		t.Fatal("relay trust map lost its pinned certificate")
-	}
 	if pinnedCertificate(trustFromExitStore(exit), "relay_bazzite", cert) == nil {
 		t.Fatal("exit trust map lost its pinned certificate")
 	}

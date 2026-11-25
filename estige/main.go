@@ -514,11 +514,12 @@ func main() {
 		fatalLine("[estige] -L belongs to the relay role; the exit node opens no local listeners")
 	}
 
-	// There is no config FILE (docs/d108's tree-shake): every fact the exit
-	// node needs arrives on the env chain — the credential set that arms the
-	// tunnel (docs/d084/d085), the egress opt-ins (VPN-R38), and the bind
-	// (env PORT, docs/d110). d104's role store becomes the home for the
-	// policy half; until it lands, the env is the whole surface.
+	// The exit node is configured from its store, not the environment
+	// (d236): $XDG_DATA_HOME/estige holds the host key and certificate, the
+	// admitted relays and the egress policy, and a missing or unparseable
+	// store is the arming fact's absence — it refuses at boot (docs/d084's
+	// kill-switch law). The env contributes only the bind (PORT, docs/d110)
+	// and the exit's optional argv postures.
 	bind := portFromEnv()
 	cfPort := cloudflarePortFromEnv()
 	if cfPort != "" && bind == ":"+cfPort {
