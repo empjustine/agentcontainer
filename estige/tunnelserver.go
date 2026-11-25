@@ -79,8 +79,9 @@ type tunnelServer struct {
 	sessions *exchangeSessions
 
 	// live is every admitted session, in every carrier. It is the status
-	// surface and the drain's work list (docs/d106): the h1.1-post-windowed registry
-	// knows only its own carrier, and net/http tracks no hijacked conn.
+	// surface and the drain's work list (docs/d106): the windowed-carrier
+	// registry knows only its own sessions, and net/http tracks no hijacked
+	// conn.
 	live liveRegistry
 }
 

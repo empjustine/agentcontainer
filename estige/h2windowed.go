@@ -5,10 +5,11 @@
 //
 // WHY a carrier of its own instead of a cap inside h2-post-unbounded: that
 // carrier's identity IS the single request — one POST, full duplex, no
-// session state beyond it. Window rotation needs the other half of the
-// h1.1-post-windowed carrier (a session keyed by an id and a window
-// sequence) while keeping full duplex *inside* a window, so this carrier
-// borrows that registry and handoff and adds nothing to the unbounded one.
+// session state beyond it. Window rotation needs the other half the retired
+// h1.1-post-windowed carrier had (a session keyed by an id and a window
+// sequence) while keeping full duplex *inside* a window, so this carrier owns
+// that registry and handoff (exchangestream.go) and adds nothing to the
+// unbounded one.
 //
 // WHY the edge's posture is discovered, not configured: an edge that caps a
 // body cannot refuse at dial time (it only rejects once bytes have moved), so
@@ -35,8 +36,9 @@ import (
 const (
 	// windowHeader declares one window's body budget. Its presence is also
 	// the carrier discriminator: a POST with it is h2-post-windowed, without
-	// it is h2-post-unbounded (or h1.1-post-windowed, when Traceparent
-	// alone is present).
+	// it is h2-post-unbounded. A Traceparent alone is the retired
+	// h1.1-post-windowed shape, which v5 answers with the camouflage 404
+	// (d239).
 	windowHeader = "X-Estige-Window-Bytes"
 	// h2WindowedBytes is the relay's window on this carrier. It is a fixed
 	// fraction of the smallest edge cap the fleet meets (Cloudflare's 100 MB)
@@ -63,7 +65,7 @@ func parseWindowBound(raw string) (int64, error) {
 }
 
 // drainBound reads one window's frames off the request body. Unlike the
-// h1.1-post-windowed carrier's drain it runs concurrently with the response,
+// retired h1.1-post-windowed drain it runs concurrently with the response,
 // which is the whole point of this carrier: the relay's reads of the target
 // are not held behind a full request body.
 func (s *exchangeStream) drainBound(readFrame func() ([]byte, error), bound int64) error {

@@ -87,3 +87,38 @@ func TestWriteProblemKeepsProblemContract(t *testing.T) {
 		t.Fatalf("status = %d, want 502", rec.Code)
 	}
 }
+
+// TestExitRoleRefusesRelayArgv: the relay's selectors cannot ride an exit
+// node. Each is refused by name, so a copied argv line is a boot failure
+// rather than a flag that silently does nothing (d171's ledger, d236's
+// selectors).
+func TestExitRoleRefusesRelayArgv(t *testing.T) {
+	cases := []struct {
+		name     string
+		insecure bool
+		forwards int
+		exitName string
+		endpoint string
+		want     string
+	}{
+		{name: "clean exit argv", want: ""},
+		{name: "-insecure-exit", insecure: true, want: "-insecure-exit"},
+		{name: "-L", forwards: 1, want: "-L"},
+		{name: "-exit", exitName: "exit-home", want: "-exit"},
+		{name: "-endpoint", endpoint: "wss://exit.example/vpn", want: "-endpoint"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := exitRoleRefusal(tc.insecure, tc.forwards, tc.exitName, tc.endpoint)
+			if tc.want == "" {
+				if err != nil {
+					t.Fatalf("clean exit argv refused: %v", err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("err = %v, want the %s refusal", err, tc.want)
+			}
+		})
+	}
+}

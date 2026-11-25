@@ -53,6 +53,25 @@ const (
 	envCloudflarePort = "PORT_CLOUDFLARE"
 )
 
+// exitRoleRefusal reports the first relay-only argv line an exit-node start
+// carries. Every one of these switches is about DIALING a peer, and the exit
+// node dials none of its own: accepting the flag silently would hide a relay
+// argv line copied onto the exit host, so each is refused by name (docs/d171's
+// ledger applied to d236's selectors).
+func exitRoleRefusal(insecureExit bool, forwards int, exitName, endpoint string) error {
+	switch {
+	case insecureExit:
+		return errors.New("-insecure-exit belongs to the relay role; the exit node dials no tunnel")
+	case forwards > 0:
+		return errors.New("-L belongs to the relay role; the exit node opens no local listeners")
+	case exitName != "":
+		return errors.New("-exit belongs to the relay role; the exit node is the peer, it dials none")
+	case endpoint != "":
+		return errors.New("-endpoint belongs to the relay role; the exit node binds, it dials no endpoint")
+	}
+	return nil
+}
+
 // portFromEnv resolves the exit node's single-port bind (docs/d110): env
 // PORT, unset → 8080 on all interfaces. The convention's whole value is that
 // process managers already speak it, so a VPN_-prefixed shadow would re-create
@@ -504,14 +523,8 @@ func main() {
 	if *mode != "exit" {
 		fatalLine("[estige] unknown -mode %q (want exit or relay)", *mode)
 	}
-	if *insecureExit {
-		// The exit node dials nothing: a switch about the dial cannot mean
-		// anything here, and silently ignoring it would hide a misplaced
-		// argv line (docs/d171).
-		fatalLine("[estige] -insecure-exit belongs to the relay role; the exit node dials no tunnel")
-	}
-	if len(forwardArgs) > 0 {
-		fatalLine("[estige] -L belongs to the relay role; the exit node opens no local listeners")
+	if err := exitRoleRefusal(*insecureExit, len(forwardArgs), *exitName, *endpointOverride); err != nil {
+		fatalLine("[estige] %v", err)
 	}
 
 	// The exit node is configured from its store, not the environment
