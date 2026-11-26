@@ -116,7 +116,11 @@ $ ESTIGE_ENV_FILE=~/.config/estige/exit.env go run run.go -mode exit
 compiles that file alone, so the image path has no second build
 implementation and no node prerequisite. The image is Debian trixie-slim
 with `ca-certificates` and `busybox-static`, runs as uid 65532, and reads its
-store from `/var/lib/estige` (bind `ESTIGE_STORE_DIR` to move the host path).
+store from `/var/lib/estige/.local/share/estige` inside the image. `run.go`
+mounts the host's **state directory** at `/var/lib/estige` (default
+`/var/lib/estige`, `ESTIGE_STATE_DIR` to move it) and prints both paths before
+starting, because the store sits one level below the mount: point it at a store
+root itself and the container would mount nothing it can read.
 Env reaches the container by name from `--env-file` when set, otherwise as
 explicit `-e` names; argv after the image is forwarded to the binary. There
 is no restart policy — the operator's service manager owns supervision.

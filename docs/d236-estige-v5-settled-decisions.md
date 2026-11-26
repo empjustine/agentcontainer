@@ -203,6 +203,11 @@ and `estige/run.go`:
   forward, and `XDG_DATA_HOME` is never forwarded: the image pins it to the
   directory the store is mounted at, so the host's value would point the
   container at a path it cannot see.
+- **The mount is a state directory, not the store.** `ESTIGE_STATE_DIR` names
+  the HOST directory mounted at `/var/lib/estige`; the store the binary reads
+  is `<state>/.local/share/estige`, and `run.go` prints both paths before
+  starting. Naming it after the store would invite a value one level too deep,
+  which boots into an empty mount.
 
 ## Amendment map
 

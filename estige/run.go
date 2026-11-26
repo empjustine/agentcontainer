@@ -56,11 +56,19 @@ func main() {
 	if tag == "" {
 		tag = "localhost/estige:" + strings.TrimSpace(string(version))
 	}
-	store := os.Getenv("ESTIGE_STORE_DIR")
-	if store == "" {
-		store = "/var/lib/estige"
+	// stateDir is the HOST directory the image's state mount comes from, named
+	// for that job and not for the store: the store lives one level deeper, at
+	// <stateDir>/.local/share/estige, because the image pins XDG_DATA_HOME to
+	// /var/lib/estige/.local/share. Pointing this at a store root itself would
+	// hand the container an empty mount and both roles would refuse at boot —
+	// which is why the mount is logged with the store path it produces.
+	stateDir := os.Getenv("ESTIGE_STATE_DIR")
+	if stateDir == "" {
+		stateDir = "/var/lib/estige"
 	}
-	run := []string{"run", "--rm", "--network", "host", "-v", store + ":/var/lib/estige"}
+	fmt.Fprintf(os.Stderr, "estige run: mounting %s at /var/lib/estige (store: %s/.local/share/estige)\n",
+		stateDir, strings.TrimSuffix(stateDir, "/"))
+	run := []string{"run", "--rm", "--network", "host", "-v", stateDir + ":/var/lib/estige"}
 	if envFile := os.Getenv("ESTIGE_ENV_FILE"); envFile != "" {
 		run = append(run, "--env-file", envFile)
 	} else {
