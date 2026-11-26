@@ -3,12 +3,17 @@
 // One binary, two network positions (docs/d088): the EXIT node terminates
 // tunnels at the edge and opens egress under the policy the operator reviews;
 // the RELAY node dials in and serves localhost CONNECT/SOCKS5 proxies to
-// unmodified clients. Every input arrives through the env chain
-// (docs/d078/d084/d085/d090 + docs/d108's tree-shake): there is no config
-// file, so nothing about a deployment can live outside the environment the
-// service manager or operator hands it. A packaged runit/systemd unit sources
-// its env file and execs this binary; `proxy-env` is the only verb left for
-// the operator's shell (docs/d095).
+// unmodified clients.
+//
+// A deployment IS a store (d236): `$XDG_DATA_HOME/estige` holds the host key
+// and its certificate, the pairing rows and the egress policy, and it is the
+// only place any of that can live. The environment carries nothing but
+// non-secret runtime knobs (the bind, the relay's label) and argv carries the
+// postures an operator must be able to see in the process's own command line.
+// A node with no store — or one that does not parse — refuses to boot rather
+// than binding a port that answers 404 to everything (docs/d084's kill switch).
+// The operator's own verbs are `keygen`, `public` and `key check` for that
+// store, plus `proxy-env` for the shell chain step (docs/d095).
 //
 // The v2 host-allowlist reverse proxy (docs/d047, legacy allowlist relay) is gone
 // (docs/d108): a TLS-terminating edge sees plaintext provider keys, and no

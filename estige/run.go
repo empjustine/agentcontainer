@@ -17,8 +17,13 @@ import (
 // forwardedEnv is every non-secret variable the binary reads (d236): the
 // identity, pairing and policy come from the store the operator mounts, never
 // from this process's environment.
+//
+// XDG_DATA_HOME is deliberately NOT here: the image already pins it to
+// /var/lib/estige/.local/share, which is where the store is mounted, so
+// forwarding the host's value would point the container at a directory it
+// cannot see and both roles would refuse at boot.
 var forwardedEnv = []string{
-	"PORT", "PORT_CLOUDFLARE", "VPN_CLIENT_LABEL", "XDG_DATA_HOME",
+	"PORT", "PORT_CLOUDFLARE", "VPN_CLIENT_LABEL",
 }
 
 func fatal(format string, args ...any) {
