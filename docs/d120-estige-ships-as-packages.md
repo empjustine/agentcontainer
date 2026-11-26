@@ -31,24 +31,28 @@ no config file needed 946 lines of shell to reach `exec`.
 
 ## Decision
 
-**Packages are the only supported deployment.** Two artifacts, built from a
-`packaging/` tree inside the unit: a `.deb` for Termux (aarch64, supervised by
-busybox runit through `termux-services`) and an `.rpm` for Oracle Linux 8/9
-(x86_64, supervised by systemd, hardened). The container **image** stays —
-`Containerfile` and the `estige-image` target are untouched — but the operator
-launches it, this repo no longer does.
+**Packages and a container image are the supported deployments, and no product
+is a script.** Two package artifacts are built from a `packaging/` tree inside
+the unit: a `.deb` for Termux (aarch64, supervised by busybox runit through
+`termux-services`) and an `.rpm` for Oracle Linux 8/9 (x86_64, supervised by
+systemd, hardened). Container deployment is supported through **Go code in this
+unit** — `estige build.go` packages an already-built binary into a Debian slim
+image and `estige run.go` launches it (d236) — so the former `Containerfile`
+and the node builder's `estige-image` target are gone rather than untouched.
+This record's packages-only claim is retired by d236's amendment map; what
+survives from it is the launcher retirement below.
 
 Deleted with the launchers: `vpn-exit.sh`, `vpn-relay.sh`,
 `lib/workload-runtime.sh`, `lib/workload-*.jq`,
 `lib/log.sh`, and the shell test that drove them
 (`tests/check-vpn-relay-chain.sh`). `estige/lib/` now holds only what the
-build needs: `go-build.mjs`, `host-capabilities.mjs`, `log.mjs`.
+build needs: `go-build.mjs`.
 
 ### What each launcher responsibility became
 
 | Launcher job                                                              | Now owned by                                                                                                                             |
 | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| container launch with host networking, init, hardening                    | the image's documented `podman run` recipe; no code in the repo                                                                          |
+| container launch with host networking, init, hardening                    | `estige run.go` (host networking, no restart policy, argv forwarded; d236)                                                               |
 | supervised restart (`--restart unless-stopped`, native supervisor loop)   | the service manager (`Restart=on-failure`, runit's `runsv`)                                                                              |
 | readiness probe before handing out the proxy spelling                     | the service manager; the chain step no longer starts anything                                                                            |
 | refusing a self-chained relay (ambient proxy env naming its own listener) | **the binary** — `relayConfigFromEnv` refuses before any bind, exit 94 unchanged (docs/d095)                                             |
@@ -146,5 +150,6 @@ uninstalled.
   erase.
 - Left to a real host: installing the deb on Termux (`dpkg -i` + `sv-enable`,
   `svlogd` output), `systemd-analyze security` scoring, and an Oracle Linux
-  boot. No `podman`/`docker` on this box, so `estige-image` was not rebuilt;
-  the rpm checks used Debian's extracted `rpm` because no native one exists.
+  boot. No `podman`/`docker` on this box, so the image path (`go run build.go`,
+  d236) was not exercised here; the rpm checks used Debian's extracted `rpm`
+  because no native one exists.

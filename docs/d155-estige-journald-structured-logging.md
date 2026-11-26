@@ -69,7 +69,8 @@ floor of the oldest packaged target (d120).
 
 ### Transport is the journal protocol, because the build is cgo-free
 
-`CGO_ENABLED=0` in `estige/lib/go-build.mjs` and in the `Containerfile` rules out
+`CGO_ENABLED=0` in `estige/lib/go-build.mjs` and in the image recipe `estige/build.go`
+stages (d236) rule out
 `sd_journal_send`, which arrives with libsystemd through cgo. The protocol itself
 needs no library: the process writes `FIELD=value` lines as a Unix datagram to
 `/run/systemd/journal/socket`, which is what `sd_journal_send` does underneath,
