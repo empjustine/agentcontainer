@@ -7,16 +7,16 @@
 	},
 	"scripts": {
 		"lint:js": "biome lint . --error-on-warnings",
-		"lint:oxlint": "oxlint . -D warning",
+		"lint:oxlint": "oxlint . --deny-warnings",
 		"knip": "knip",
 		"check-types": "tsc -p tsconfig.json"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.6.3",
+		"@biomejs/biome": "2.6.9",
 		"@types/node": "24.19.2",
 		"knip": "6.43.0",
-		"oxlint": "1.90.0",
-		"oxlint-tsgolint": "7.0.2005",
+		"oxlint": "1.95.0",
+		"oxlint-tsgolint": "7.0.2008",
 		"typescript": "6.0.3"
 	}
 }

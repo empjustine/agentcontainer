@@ -11,6 +11,13 @@ tags: [toolchain, mise, termux, gates, maintainability]
 
 # d139 — one dev-toolchain bootstrap
 
+> **Superseded in part (docs/d243).** The floats this record lists —
+> `shellcheck`, `shfmt`, `jq`, `ruff`, `uv`, `ty` at `@latest` — are exact pins
+> for every tool that prints a gate verdict; `jq` is the only one still floating,
+> and a pin's value is now the Termux host package (or mise's ceiling where mise
+> cannot reach it). The one-table placement and the `full`/`none` profile split
+> below are unchanged.
+
 ## Problem
 
 Three acquisition paths had grown for the same question — _where does a non-npm
@@ -98,7 +105,8 @@ of the tree.
   failure.
 - The pins moved out of `lint.sh`, which supersedes d137's _Pinning_ placement
   sentence by name; d137's reasoning (a linter's rule set **is** the gate) is
-  unchanged and is what the pinned-versus-floated split still encodes.
+  unchanged and is what the pinned-versus-floated split still encodes — with the
+  split narrowed to `jq` alone by docs/d243.
 
 ## Verification status
 

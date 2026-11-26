@@ -383,7 +383,7 @@ export async function pool(items, limit, worker) {
   const runners = Math.max(1, Math.min(limit, items.length));
   await Promise.all(
     Array.from({ length: runners }, async () => {
-      for (;;) {
+      while (true) {
         const i = next++;
         const item = items[i];
         // i >= items.length is the exit; the undefined check is its

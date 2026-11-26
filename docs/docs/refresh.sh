@@ -22,15 +22,12 @@ die() {
 
 # The vendored tree is committed oxfmt-canonical and ./lint.sh gates that, so a
 # refresh has to land in the same shape — otherwise every re-clip would show a
-# formatting diff on top of the real change. The version must match lint.sh's
-# OXFMT_VERSION: a different oxfmt can reformat differently, which is the why
-# of that pin.
-# The vendored tree is committed oxfmt-canonical and ./lint.sh gates that, so a
-# refresh has to land in the same shape — otherwise every re-clip would show a
-# formatting diff on top of the real change. The version must match lint.sh's
-# OXFMT_VERSION: two oxfmt versions on one tree give two canonical forms, and the
-# gate only knows the pinned one.
-OXFMT_VERSION=0.75.0
+# formatting diff on top of the real change. The version is dev-tools.sh's pin
+# (d139/d243), read from that one table for the reason the pin exists: two oxfmt
+# versions on one tree give two canonical forms, and the gate knows one.
+# shellcheck source-path=SCRIPTDIR/../.. source=dev-tools.sh
+. "$here/../../dev-tools.sh"
+OXFMT_VERSION=$(dev_tool_pin oxfmt)
 format_vendored() {
 	# mise first: it is the only source of the PINNED version, and a bare `oxfmt`
 	# on a mise host is a shim that may answer a different one. `command -v oxfmt`
