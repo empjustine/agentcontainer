@@ -63,12 +63,12 @@ const (
 // node dials none of its own: accepting the flag silently would hide a relay
 // argv line copied onto the exit host, so each is refused by name (docs/d171's
 // ledger applied to d236's selectors).
-func exitRoleRefusal(insecureExit, legacyIPRelay bool, forwards int, exitName, endpoint string) error {
+func exitRoleRefusal(insecureExit, refuseIPTargets bool, forwards int, exitName, endpoint string) error {
 	switch {
 	case insecureExit:
 		return errors.New("-insecure-exit belongs to the relay role; the exit node dials no tunnel")
-	case legacyIPRelay:
-		return errors.New("-legacy-ip-relay belongs to the relay role; the exit node has no local doors (d163)")
+	case refuseIPTargets:
+		return errors.New("-refuse-ip-targets belongs to the relay role; the exit node has no local doors (d163)")
 	case forwards > 0:
 		return errors.New("-L belongs to the relay role; the exit node opens no local listeners")
 	case exitName != "":
@@ -455,11 +455,11 @@ func main() {
 	mode := flag.String("mode", "exit", "process role: \"exit\" (the exit node: funnel front + tunnel server) or \"relay\" (the relay node: loopback CONNECT/SOCKS5 proxy feeding the tunnel, carriers; docs/d073 §7, docs/d088)")
 	proxyListen := flag.String("proxy-listen", "127.0.0.1:3128", "relay role: loopback HTTP CONNECT listener")
 	socksListen := flag.String("socks-listen", "127.0.0.1:1080", "relay role: loopback SOCKS5 listener")
-	// Address targets stay refused at the relay's own doors until asked
-	// for (d163): the exit answers them with a refusal of its own unless
-	// its egress config opts in, and this switch is the relay's half of the
-	// same statement. It never re-enables a guaranteed-bogon target.
-	legacyIPRelay := flag.Bool("legacy-ip-relay", false, "relay role: relay address (IP-literal) targets instead of refusing them at the local doors (d163)")
+	// Address targets are the norm (a VPN carries IP traffic); this switch is
+	// the opt-in STRICT door, so the non-default posture is the one visible in
+	// argv (d163's ledger). It never re-enables a guaranteed-bogon target,
+	// which answers first either way.
+	refuseIPTargets := flag.Bool("refuse-ip-targets", false, "relay role: refuse address (IP-literal) targets at the local doors instead of passing them to the exit's policy (d242)")
 	// One switch for both degraded relay->exit postures (docs/d171): a
 	// skipped certificate check on an https/wss leg, and a cleartext
 	// ws:// URL. It is argv, not env, because a posture this load-bearing
@@ -504,7 +504,7 @@ func main() {
 			fatalLine("[vpn-relay] -status-listen belongs to the exit role; the relay's surface is its loopback /healthz (VPN-R27)")
 		}
 		relayCfg, err := relayConfigFromEnv(*proxyListen, *socksListen,
-			relaySelection{Exit: *exitName, Endpoint: *endpointOverride}, *legacyIPRelay, *insecureExit)
+			relaySelection{Exit: *exitName, Endpoint: *endpointOverride}, *refuseIPTargets, *insecureExit)
 		if err != nil {
 			if errors.Is(err, errSelfChained) {
 				logLine(sevError, "[vpn-relay] %v", err)
@@ -530,7 +530,7 @@ func main() {
 	if *mode != "exit" {
 		fatalLine("[estige] unknown -mode %q (want exit or relay)", *mode)
 	}
-	if err := exitRoleRefusal(*insecureExit, *legacyIPRelay, len(forwardArgs), *exitName, *endpointOverride); err != nil {
+	if err := exitRoleRefusal(*insecureExit, *refuseIPTargets, len(forwardArgs), *exitName, *endpointOverride); err != nil {
 		fatalLine("[estige] %v", err)
 	}
 

@@ -96,7 +96,7 @@ func TestExitRoleRefusesRelayArgv(t *testing.T) {
 	cases := []struct {
 		name     string
 		insecure bool
-		legacyIP bool
+		refuseIP bool
 		forwards int
 		exitName string
 		endpoint string
@@ -104,14 +104,14 @@ func TestExitRoleRefusesRelayArgv(t *testing.T) {
 	}{
 		{name: "clean exit argv", want: ""},
 		{name: "-insecure-exit", insecure: true, want: "-insecure-exit"},
-		{name: "-legacy-ip-relay", legacyIP: true, want: "-legacy-ip-relay"},
+		{name: "-refuse-ip-targets", refuseIP: true, want: "-refuse-ip-targets"},
 		{name: "-L", forwards: 1, want: "-L"},
 		{name: "-exit", exitName: "exit-home", want: "-exit"},
 		{name: "-endpoint", endpoint: "wss://exit.example/vpn", want: "-endpoint"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := exitRoleRefusal(tc.insecure, tc.legacyIP, tc.forwards, tc.exitName, tc.endpoint)
+			err := exitRoleRefusal(tc.insecure, tc.refuseIP, tc.forwards, tc.exitName, tc.endpoint)
 			if tc.want == "" {
 				if err != nil {
 					t.Fatalf("clean exit argv refused: %v", err)

@@ -31,26 +31,17 @@ import (
 	"strings"
 )
 
-// defaultDenyCidrs is VPN-R35's normative list, verbatim as data. These are
-// denied EVEN IF they resolve for a legitimate-looking name; the operator
-// opts a range back in through egress.allowCidrs (an explicit allow wins —
-// that is what "unless the operator policy explicitly allows a CIDR" means,
-// and it is also how the smoke test reaches its loopback upstream).
-var defaultDenyCidrs = []string{
-	"127.0.0.0/8",       // loopback
-	"::1/128",           // loopback v6
-	"169.254.0.0/16",    // link-local +169.254.169.254 cloud metadata
-	"fe80::/10",         // link-local v6
-	"fd00:ec2::254/128", // AWS IMDS v6 metadata
-	"0.0.0.0/8",         // unspecified ("this network")
-	"::/128",            // unspecified v6
-	"224.0.0.0/4",       // multicast
-	"ff00::/8",          // multicast v6
-	"10.0.0.0/8",        // RFC 1918
-	"172.16.0.0/12",     // RFC 1918
-	"192.168.0.0/16",    // RFC 1918
-	"fc00::/7",          // unique local (ULA)
-}
+// defaultDenyCidrs is the operator's reservation table when none is
+// configured, and it is EMPTY by design: a VPN carries IP traffic, so private,
+// link-local and ULA space is a normal destination and only space that can
+// never answer a connection is refused out of the box — that set is
+// guaranteedBogonCidrs, which is code and answers before any table (d163).
+//
+// The trade is stated in the record that owns this default: 169.254.169.254
+// (cloud metadata) is reachable until an operator reserves it, because
+// link-local is also where real peers live. An operator restores the old
+// posture with one denyCidrs entry per range.
+var defaultDenyCidrs = []string{}
 
 // defaultEgressPorts is VPN-R37's default port policy. Ports are the
 // operator's data when configured; 80/443 only when they are not.
@@ -141,28 +132,38 @@ func parseEgressConfig(raw, what string) (egressConfig, error) {
 	dec := json.NewDecoder(strings.NewReader(raw))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&cfg); err != nil {
-		return egressConfig{}, fmt.Errorf("%s must be a JSON object {\"allowCidrs\": [\"10.0.0.0/8\"], \"ports\": [443]}: %w", what, err)
+		return egressConfig{}, fmt.Errorf("%s must be a JSON object {\"denyCidrs\": [\"169.254.169.254/32\"], \"allowCidrs\": [\"10.1.2.0/24\"], \"ports\": [443]}: %w", what, err)
 	}
 	if _, err := dec.Token(); !errors.Is(err, io.EOF) {
 		return egressConfig{}, fmt.Errorf("%s has content after the JSON object", what)
 	}
-	if len(cfg.AllowCidrs) == 0 && len(cfg.Ports) == 0 && !cfg.AllowIPLiterals {
-		return egressConfig{}, fmt.Errorf("%s names neither a CIDR, a port nor the IP-exit switch", what)
+	if len(cfg.DenyCidrs) == 0 && len(cfg.AllowCidrs) == 0 && len(cfg.Ports) == 0 && !cfg.RefuseIPLiterals {
+		return egressConfig{}, fmt.Errorf("%s names no range, port or switch — the defaults need no egress block", what)
 	}
 	return cfg, nil
 }
 
-// egressConfig is the config-data half of the policy (VPN-R38): opt-in
-// CIDRs that override the default-deny table, and the port set that
+// egressConfig is the config-data half of the policy (VPN-R38): the ranges an
+// operator reserves, the exceptions inside them, and the port set that
 // replaces the 80/443 default when present.
+//
+// WHY reservations are opt-in data rather than a default table: the default is
+// "route IP traffic" (a VPN's job), so refusing a range is an operator
+// decision about their own network. The one refusal that is not a decision is
+// guaranteedBogonCidrs — space that can never answer — and that is code.
 type egressConfig struct {
+	// DenyCidrs reserves ranges: a resolved or literal address inside one is
+	// refused unless AllowCidrs carves it back out. Absent means no
+	// reservations, so private and link-local space is reachable.
+	DenyCidrs []string `json:"denyCidrs,omitempty"`
+	// AllowCidrs is the exception list for DenyCidrs (an explicit allow wins
+	// over the operator's own reservation, d073 VPN-R35's rule).
 	AllowCidrs []string `json:"allowCidrs,omitempty"`
 	Ports      []uint16 `json:"ports,omitempty"`
-	// AllowIPLiterals is the IP-exit switch (d163). Off, an address target
-	// dies at the door with target-ip-literal; on, it falls through to the
-	// dial path like a name — the address table still answers for it after
-	// resolution, and the guaranteed refusals answer first either way.
-	AllowIPLiterals bool `json:"allowIPLiterals,omitempty"`
+	// RefuseIPLiterals restores the form-level refusal of address targets
+	// (the pre-v5 default). Absent means address targets are dialed like
+	// names; the guarantee and the reservation table answer either way.
+	RefuseIPLiterals bool `json:"refuseIPLiterals,omitempty"`
 }
 
 // hostLookup is the exit's one DNS path (VPN-R36): dialValidated resolves
@@ -182,11 +183,11 @@ var defaultHostLookup hostLookup = net.DefaultResolver
 // egressPolicy is the parsed, ready-to-check form. Zero value is not usable;
 // build with newEgressPolicy so bad config data fails loudly (NFR-2).
 type egressPolicy struct {
-	deny          []netip.Prefix
-	allow         []netip.Prefix
-	ports         map[uint16]bool
-	allowLiterals bool
-	resolver      hostLookup
+	deny           []netip.Prefix
+	allow          []netip.Prefix
+	ports          map[uint16]bool
+	refuseLiterals bool
+	resolver       hostLookup
 }
 
 func newEgressPolicy(cfg egressConfig) (*egressPolicy, error) {
@@ -195,6 +196,13 @@ func newEgressPolicy(cfg egressConfig) (*egressPolicy, error) {
 		prefix, err := netip.ParsePrefix(c)
 		if err != nil {
 			return nil, fmt.Errorf("internal: bad default-deny CIDR %q: %w", c, err)
+		}
+		p.deny = append(p.deny, prefix)
+	}
+	for _, c := range cfg.DenyCidrs {
+		prefix, err := netip.ParsePrefix(c)
+		if err != nil {
+			return nil, fmt.Errorf("egress denyCidrs %q: %w", c, err)
 		}
 		p.deny = append(p.deny, prefix)
 	}
@@ -215,7 +223,7 @@ func newEgressPolicy(cfg egressConfig) (*egressPolicy, error) {
 		}
 		p.ports[port] = true
 	}
-	p.allowLiterals = cfg.AllowIPLiterals
+	p.refuseLiterals = cfg.RefuseIPLiterals
 	p.resolver = defaultHostLookup
 	return p, nil
 }
@@ -253,10 +261,10 @@ func (p *egressPolicy) allowPort(port uint16) bool {
 //
 // The order is the policy (d163): guaranteed refusals answer first, so no
 // knob can re-enable a name or an address with no possible answer on the
-// other end; then the IP-exit gate, which keeps address targets refused
-// until the operator configures it; then the port set. The address table is
-// consulted after resolution instead, because that is where the addresses
-// are.
+// other end; then the form switch an operator may have set to refuse address
+// targets; then the port set. The reservation table is consulted after
+// resolution instead, because that is where the addresses are — and a literal
+// target is checked against it here, being already an address.
 func (p *egressPolicy) targetVerdict(host string, port uint16) string {
 	if isBogonName(host) {
 		return errReasonBogon
@@ -265,8 +273,11 @@ func (p *egressPolicy) targetVerdict(host string, port uint16) string {
 		if isGuaranteedBogon(addr) {
 			return errReasonBogon
 		}
-		if !p.allowLiterals {
+		if p.refuseLiterals {
 			return errReasonTargetIP
+		}
+		if !p.allowAddr(addr) {
+			return errReasonDenied
 		}
 	}
 	if !p.allowPort(port) {

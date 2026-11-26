@@ -165,7 +165,8 @@ func writeTestRoleFiles(endpoint string, egress *egressConfig) error {
 // egressBlock renders the store's egress member, omitting it for a zero
 // config — absent is what "no opt-ins, use the defaults" means in the grammar.
 func egressBlock(egress *egressConfig) string {
-	if egress == nil || (len(egress.AllowCidrs) == 0 && len(egress.Ports) == 0 && !egress.AllowIPLiterals) {
+	if egress == nil || (len(egress.DenyCidrs) == 0 && len(egress.AllowCidrs) == 0 &&
+		len(egress.Ports) == 0 && !egress.RefuseIPLiterals) {
 		return ""
 	}
 	raw, err := json.Marshal(egress)

@@ -9,54 +9,94 @@ import (
 	"time"
 )
 
-// VPN-R35's deny list as behavior: default-deny means every address on the
-// table is refused unless the operator's allowCIDRs put it back — this test
-// IS the requirements table, so a config-shaped change that silently opens
-// loopback fails here.
-func TestEgressDefaultDenyTable(t *testing.T) {
+// d242's default as behavior: the ONLY refusal out of the box is the
+// guarantee — space that can never answer a connection — while private,
+// link-local and ULA space is a normal destination a VPN carries. This test
+// IS the posture, so a change that silently starts denying a private range
+// (or silently admits loopback) fails here.
+func TestEgressDefaultPosture(t *testing.T) {
 	p, err := newEgressPolicy(egressConfig{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	denied := []string{
-		"127.0.0.1", "::1", "169.254.169.254", "fe80::1", "fd00:ec2::254",
-		"0.0.0.0", "::", "224.0.0.1", "ff02::1",
+	// The guarantee answers in targetVerdict/isGuaranteedBogon before this
+	// table, so these are checked there (TestTargetVerdictOrder); the table
+	// itself reserves nothing.
+	for _, s := range []string{
+		"1.1.1.1", "8.8.8.8", "2606:4700::1111", "93.184.216.34",
 		"10.0.0.1", "172.16.0.1", "192.168.1.1", "fc00::1",
-		// IPv4-mapped form must not slip past the v4 rules.
-		"::ffff:127.0.0.1", "::ffff:169.254.169.254",
-	}
-	for _, s := range denied {
-		ip := netip.MustParseAddr(s)
-		if p.allowAddr(ip) {
-			t.Errorf("%s: expected DENIED by default", s)
-		}
-	}
-
-	allowed := []string{"1.1.1.1", "8.8.8.8", "2606:4700::1111", "93.184.216.34"}
-	for _, s := range allowed {
+		"169.254.169.254", "fe80::1", "fd00:ec2::254",
+	} {
 		ip := netip.MustParseAddr(s)
 		if !p.allowAddr(ip) {
-			t.Errorf("%s: public address should pass by default", s)
+			t.Errorf("%s: expected ADMITTED by default (only the guarantee refuses)", s)
+		}
+	}
+	// And the guarantee still refuses, whatever the table says.
+	for _, s := range []string{"127.0.0.1", "::1", "0.0.0.0", "::", "224.0.0.1", "::ffff:127.0.0.1"} {
+		ip := netip.MustParseAddr(s)
+		if got := p.targetVerdict(ip.String(), 443); got != errReasonBogon {
+			t.Errorf("%s: targetVerdict = %q, want %q", s, got, errReasonBogon)
 		}
 	}
 }
 
-// The explicit-allow override (VPN-R35's "unless the operator policy
-// explicitly allows a CIDR") — also how the smoke test reaches a loopback
-// upstream.
-func TestEgressExplicitAllowOverridesDeny(t *testing.T) {
-	p, err := newEgressPolicy(egressConfig{AllowCidrs: []string{"127.0.0.0/8", "169.254.169.254/32"}})
+// The reservation table with its exception list: denyCidrs is what an
+// operator reserves, allowCidrs carves a range back out of it, and the
+// guarantee still wins over both.
+func TestEgressReservationAndException(t *testing.T) {
+	p, err := newEgressPolicy(egressConfig{
+		DenyCidrs:  []string{"10.0.0.0/8", "169.254.0.0/16"},
+		AllowCidrs: []string{"10.1.2.0/24", "169.254.169.254/32"},
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, s := range []string{"127.0.0.1", "127.1.2.3", "169.254.169.254"} {
+	for _, s := range []string{"10.1.2.3", "169.254.169.254", "1.1.1.1", "192.168.1.1"} {
 		if !p.allowAddr(netip.MustParseAddr(s)) {
-			t.Errorf("%s: operator-allowed CIDR must pass", s)
+			t.Errorf("%s: expected ADMITTED (not reserved, or carved back out)", s)
 		}
 	}
-	// One allowlist entry does not become a blanket: private stays closed.
-	if p.allowAddr(netip.MustParseAddr("192.168.1.1")) {
-		t.Error("192.168.1.1: unrelated private range must stay denied")
+	for _, s := range []string{"10.9.9.9", "169.254.1.1"} {
+		if p.allowAddr(netip.MustParseAddr(s)) {
+			t.Errorf("%s: expected DENIED by the operator's reservation", s)
+		}
+	}
+	// The guarantee is not a reservation: no allow list re-enables it.
+	g, err := newEgressPolicy(egressConfig{
+		DenyCidrs:  []string{"0.0.0.0/0"},
+		AllowCidrs: []string{"0.0.0.0/0"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := g.targetVerdict("127.0.0.1", 443); got != errReasonBogon {
+		t.Errorf("loopback under a 0.0.0.0/0 allow: %q, want %q", got, errReasonBogon)
+	}
+}
+
+// The allow list is the reservation table's exception list (d242): it cannot
+// re-enable the guarantee, and it does not turn into a blanket for ranges the
+// operator did not reserve — those need no permission at all now.
+func TestEgressAllowListIsAnExceptionList(t *testing.T) {
+	p, err := newEgressPolicy(egressConfig{
+		DenyCidrs:  []string{"127.0.0.0/8"},
+		AllowCidrs: []string{"127.0.0.1/32"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The carve-out is real at the table level...
+	if !p.allowAddr(netip.MustParseAddr("127.0.0.1")) {
+		t.Error("127.0.0.1: the operator's exception must pass the reservation")
+	}
+	// ...but never for the guarantee, which answers before any table.
+	if got := p.targetVerdict("127.0.0.1", 443); got != errReasonBogon {
+		t.Errorf("loopback: targetVerdict = %q, want %q", got, errReasonBogon)
+	}
+	// An unreserved private range needs no permission.
+	if !p.allowAddr(netip.MustParseAddr("192.168.1.1")) {
+		t.Error("192.168.1.1: unreserved private range must be admitted by default")
 	}
 }
 
@@ -141,8 +181,9 @@ func TestParseIPLiteral(t *testing.T) {
 }
 
 // VPN-R36 end to end: resolve once, filter EVERY address, dial the pinned
-// one. "localhost" resolves to loopback — denied under default policy, and
-// (the important half) an ALLOWED policy dials a validated literal address.
+// one. "localhost" resolves to loopback — refused when the operator reserves
+// that range, and (the important half) the default posture dials a validated
+// literal address.
 func TestDialValidated(t *testing.T) {
 	target, err := new(net.ListenConfig).Listen(context.Background(), "tcp", "127.0.0.1:0")
 	if err != nil {
@@ -151,8 +192,9 @@ func TestDialValidated(t *testing.T) {
 	defer target.Close()
 	port := portOf(t, target.Addr().String())
 
-	// Default policy: name resolves into denied space → refused, nothing dialed.
-	p, err := newEgressPolicy(egressConfig{Ports: []uint16{port}})
+	// An operator reservation: the name resolves into reserved space → refused
+	// with the policy vocabulary, nothing dialed (d242).
+	p, err := newEgressPolicy(egressConfig{DenyCidrs: []string{"127.0.0.0/8"}, Ports: []uint16{port}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -162,13 +204,14 @@ func TestDialValidated(t *testing.T) {
 	// (egressFailureReason), not a predicate name: that is what a caller can
 	// observe, and it is the one place the classification lives.
 	if _, _, err := dialValidated(dialCtx, p, "localhost", port); err == nil {
-		t.Fatal("default policy must refuse a loopback-resolving name")
+		t.Fatal("a reserved range must refuse a loopback-resolving name")
 	} else if got := egressFailureReason(err); got != errReasonDenied {
 		t.Fatalf("expected the policy-denied reason, got %v → %s", err, got)
 	}
 
-	// Operator-allowed: same name now passes, and the connection lands.
-	p2, err := newEgressPolicy(egressConfig{AllowCidrs: []string{"127.0.0.0/8"}, Ports: []uint16{port}})
+	// No reservation: the same name passes the table and the connection lands
+	// — the default posture is "route it".
+	p2, err := newEgressPolicy(egressConfig{Ports: []uint16{port}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -195,9 +238,9 @@ func TestDialValidated(t *testing.T) {
 
 // d163's door predicate: the guaranteed set is the NO-ANSWER space, and the
 // complementary half of the test is what keeps it that narrow — RFC 1918,
-// link-local, the metadata address and the documentation ranges stay under
-// the operator's allow table, because a pinhole for one of those is a
-// reviewable decision while a guaranteed refusal must not be one.
+// link-local, the metadata address and the documentation ranges are admitted
+// by default (d242), because a refusal for one of those is a reviewable
+// operator decision while the guarantee must not be one.
 func TestGuaranteedRefusals(t *testing.T) {
 	for _, s := range []string{
 		"0.0.0.1", "127.0.0.1", "127.1.2.3", "255.255.255.255",
@@ -257,13 +300,13 @@ func TestIsBogonName(t *testing.T) {
 	}
 }
 
-// d163's refusal order in the one function that owns it: guaranteed
-// refusals first, then the IP-exit switch, then the port set. Several rows
-// name a config whose LATER gates would accept the target — the open config
-// allows every address and every port in the row — which is exactly what
-// the order has to defeat.
+// d242's refusal order in the one function that owns it: guaranteed
+// refusals first, then the strict-door switch, then the operator's
+// reservation table, then the port set. Several rows name a config whose
+// LATER gates would accept the target — the open config allows every address
+// and every port in the row — which is exactly what the order has to defeat.
 func TestTargetVerdictOrder(t *testing.T) {
-	open := egressConfig{AllowIPLiterals: true, AllowCidrs: []string{"0.0.0.0/0"}, Ports: []uint16{80, 443, 8443}}
+	open := egressConfig{AllowCidrs: []string{"0.0.0.0/0"}, Ports: []uint16{80, 443, 8443}}
 	for _, tc := range []struct {
 		name string
 		cfg  egressConfig
@@ -271,12 +314,19 @@ func TestTargetVerdictOrder(t *testing.T) {
 		port uint16
 		want string
 	}{
-		{"bogon name before the switch", egressConfig{AllowIPLiterals: true}, "localhost", 443, errReasonBogon},
+		{"bogon name before the switch", egressConfig{RefuseIPLiterals: true}, "localhost", 443, errReasonBogon},
 		{"bogon name under the default config", egressConfig{}, "a.dev.localhost", 80, errReasonBogon},
-		{"hosts-file loopback name before the switch", egressConfig{AllowIPLiterals: true}, "localhost6.localdomain6", 443, errReasonBogon},
+		{"hosts-file loopback name before the switch", egressConfig{RefuseIPLiterals: true}, "localhost6.localdomain6", 443, errReasonBogon},
 		{"bogon address before its own allow rule", open, "127.0.0.1", 8443, errReasonBogon},
 		{"v4-mapped spelling cannot dodge", open, "::ffff:127.0.0.1", 443, errReasonBogon},
-		{"literal without the switch", egressConfig{}, "1.2.3.4", 443, errReasonTargetIP},
+		// An address target is the default (d242): no switch needed.
+		{"literal by default, port in set", egressConfig{Ports: []uint16{443}}, "1.2.3.4", 443, ""},
+		{"literal by default, a private range is not reserved", egressConfig{Ports: []uint16{443}}, "10.0.0.5", 443, ""},
+		{"literal by default, link-local is not reserved", egressConfig{Ports: []uint16{443}}, "169.254.1.9", 443, ""},
+		{"literal the operator reserved", egressConfig{Ports: []uint16{443}, DenyCidrs: []string{"169.254.0.0/16"}}, "169.254.169.254", 443, errReasonDenied},
+		{"reserved range carved back out", egressConfig{Ports: []uint16{443},
+			DenyCidrs: []string{"10.0.0.0/8"}, AllowCidrs: []string{"10.1.2.0/24"}}, "10.1.2.3", 443, ""},
+		{"literal under the strict door", egressConfig{Ports: []uint16{443}, RefuseIPLiterals: true}, "1.2.3.4", 443, errReasonTargetIP},
 		{"literal with the switch, port in set", open, "1.2.3.4", 8443, ""},
 		{"literal with the switch, port out", open, "1.2.3.4", 22, errReasonPortDenied},
 		{"name, port in set", open, "example.com", 443, ""},
