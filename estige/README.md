@@ -175,16 +175,16 @@ $XDG_DATA_HOME/estige/          0700
     └── <principal>.crt         0600   its self-signed certificate — derived, pinned by peers
 ```
 
-| fact                            | spelling                                                                                                                                                       |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| arming fact (the capability)    | the store itself; a node with no parseable store refuses to boot (docs/d084/d236)                                                                              |
-| relay dial endpoint             | `relay.json` `endpoint` — http(s)/ws(s), normalized once (docs/d090)                                                                                           |
-| pinned peers                    | `relay.json` `exit[]` / `exit.json` `relays[]`, each `{"name", "public"}`; `public` is the certificate                                                         |
-| per-principal egress (optional) | an `exit.json` relay row's own `egress` block (docs/d078)                                                                                                      |
-| egress opt-ins (VPN-R38)        | `exit.json` `egress`: `{"allowCidrs": ["10.0.0.0/8"], "ports": [443]}`; absent = the defaults                                                                  |
-| bind (tailscale edge)           | `PORT` (docs/d110): the Funnel-facing port, where h2-post-unbounded is allowed                                                                                 |
-| bind (capped edge, optional)    | `PORT_CLOUDFLARE`: a second port whose connector fronts an edge that caps a request body; h2-post-unbounded is refused there at request initiation (docs/d222) |
-| relay label (optional)          | `VPN_CLIENT_LABEL`, log metadata only (defaults to the hostname)                                                                                               |
+| fact                            | spelling                                                                                                                                                                                |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| arming fact (the capability)    | the store itself; a node with no parseable store refuses to boot (docs/d084/d236)                                                                                                       |
+| relay dial endpoint             | `relay.json` `endpoint` — http(s)/ws(s), normalized once (docs/d090)                                                                                                                    |
+| pinned peers                    | `relay.json` `exit[]` / `exit.json` `relays[]`, each `{"name", "public"}`; `public` is the certificate                                                                                  |
+| per-principal egress (optional) | an `exit.json` relay row's own `egress` block (docs/d078)                                                                                                                               |
+| egress policy (VPN-R38/d242)    | `exit.json` `egress`: `{"denyCidrs": ["169.254.169.254/32"], "allowCidrs": ["10.1.2.0/24"], "ports": [443], "refuseIPLiterals": false}`; absent = route everything the guarantee allows |
+| bind (tailscale edge)           | `PORT` (docs/d110): the Funnel-facing port, where h2-post-unbounded is allowed                                                                                                          |
+| bind (capped edge, optional)    | `PORT_CLOUDFLARE`: a second port whose connector fronts an edge that caps a request body; h2-post-unbounded is refused there at request initiation (docs/d222)                          |
+| relay label (optional)          | `VPN_CLIENT_LABEL`, log metadata only (defaults to the hostname)                                                                                                                        |
 
 Why: a credential in the environment is a second copy outside the store's
 `0700` boundary (VPN-R32), and the pairing line — endpoint ↔ principal ↔
@@ -260,12 +260,15 @@ edge refuses h2-post-unbounded at request initiation, and that one refusal
 switches the process to websocket → h2-post-windowed for later CONNECTs
 (docs/d222) — and the listeners default to
 `127.0.0.1:3128`/`1080` (`-proxy-listen`/`-socks-listen`; VPN-R23 forbids
-exposing them). `-legacy-ip-relay` (off by default) passes address targets to
-the exit's gate instead of refusing them at the door, and both doors refuse
-the `localhost` name family (`localhost`, the whole `.localhost` TLD, and
-the `/etc/hosts` spellings like `localhost4.localdomain4`) plus
-guaranteed-bogon space before any lookup regardless (docs/d163). The relay refuses to start if the ambient proxy env already
-names its own listener (exit 94) — a self-chain would dial a loop.
+exposing them). An address target — a client that resolved the name itself,
+`CONNECT 1.1.1.1:443` or SOCKS5 `ATYP=1/4` — passes the door and the exit's
+policy answers it (docs/d242); `-refuse-ip-targets` is the opt-in strict door
+that refuses the address form locally, and both doors refuse the `localhost`
+name family (`localhost`, the whole `.localhost` TLD, and the `/etc/hosts`
+spellings like `localhost4.localdomain4`) plus guaranteed-bogon space before
+any lookup regardless (docs/d163). The relay refuses to start if the ambient
+proxy env already names its own listener (exit 94) — a self-chain would dial a
+loop.
 
 Which peer this relay dials is argv too: `-exit <name>` selects a `relay.json`
 exit row — its name is the peer's security principal, and every certificate

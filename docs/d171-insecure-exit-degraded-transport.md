@@ -85,7 +85,7 @@ stated under the gate heading below.
 ### One switch, two postures
 
 - **The switch** — `-insecure-exit`, argv, relay role only, default off.
-  It rides the same ledger as `-legacy-ip-relay`: a switch this
+  It rides the same ledger as `-refuse-ip-targets`: a switch this
   load-bearing must be visible in the process's own command line (d145,
   d163), not spelled in the environment. Passing it with `-mode=exit` is a
   boot refusal — the exit node dials nothing.

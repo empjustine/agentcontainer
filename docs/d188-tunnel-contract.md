@@ -85,9 +85,12 @@ MITMs.
   dials it while presenting the client's original host as SNI/`Host`.
 - **VPN-R21** — TCP/443 and TCP/80 targets are supported; other ports obey the
   egress policy.
-- **VPN-R22** — A `CONNECT` whose target is a literal IP address is rejected:
-  resolution and pinning stay server-side, with no second path that dials an
-  unchecked address.
+- **VPN-R22** — A `CONNECT` whose target is a literal IP address is admitted:
+  a VPN carries IP traffic, so an address the client already resolved is the
+  normal case (d242). Resolution and pinning stay the exit's for **names**, and
+  the exit never dials an address it did not check — the guarantee and the
+  operator's reservation table (`egress.denyCidrs`) answer either way. The
+  strict door is the opt-in `-refuse-ip-targets`.
 
 ## The client and the loopback proxy
 
@@ -96,7 +99,10 @@ MITMs.
   obey the same rule: a non-loopback bind half is refused at parse time.
 - **VPN-R24** — It offers an HTTP proxy listener implementing
   `CONNECT host:port` (for `HTTPS_PROXY`) and SOCKS5 with remote-name
-  resolution (for `ALL_PROXY` and non-HTTP TCP).
+  resolution (for `ALL_PROXY` and non-HTTP TCP). SOCKS5 also carries an address
+  target (`ATYP=1/4`), so `socks5://` and `socks5h://` both work; `socks5h://`
+  stays the recommended spelling because a name keeps the exit's resolution and
+  pinning.
 - **VPN-R25** — The client never terminates TLS, never holds a certificate for
   a target, and is never a MITM.
 - **VPN-R26** — The client authenticates to the relay and fails closed: no
@@ -130,9 +136,12 @@ MITMs.
 
 ## Egress policy
 
-- **VPN-R35** — Default-deny egress: loopback, link-local, cloud metadata,
-  unspecified, multicast and RFC 1918/ULA ranges are denied unless the
-  operator policy explicitly allows a CIDR.
+- **VPN-R35** — The guarantee is the only default refusal: unspecified,
+  loopback, broadcast, multicast, discard-only and the v4-mapped block can
+  never answer a connection and are denied always. Every other range —
+  link-local, cloud metadata, RFC 1918/ULA included — is admitted unless the
+  operator reserves it with `egress.denyCidrs`, and an `egress.allowCidrs`
+  entry carves a range back out of a reservation (d242).
 - **VPN-R36** — Resolution is pinned and re-checked: policy applies to every
   resolved address, the dial uses a validated address, and redirects/rebinds
   cannot escape the validated set.

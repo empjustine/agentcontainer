@@ -63,7 +63,7 @@ left answering nothing that generation asks (docs/d072).
 **Delivered (docs/d187, docs/d188):** the SSL-VPN tunnel family in
 `estige/` is the whole serving edge — the allowlist relay and the
 authenticated relay are deleted (docs/d108). [d188](d188-tunnel-contract.md)
-is the requirements register (end-to-end TLS with no MITM, default-deny
+is the requirements register (end-to-end TLS with no MITM, guarantee-first
 egress, the loopback client); [d077](d077-ssl-vpn-transport-ladder.md) owns
 the transport carriers (h2-post-unbounded, WebSocket, h2-post-windowed) and
 [d187](d187-tunnel-family-complete-arms-by-default.md) the arming and the

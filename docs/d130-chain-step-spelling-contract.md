@@ -100,9 +100,10 @@ pinned:
 
 - **`ALL_PROXY`/`all_proxy` name `socks5h://<socks-listen>`.** The client
   keeps the name on the wire; the exit node resolves, validates and pins
-  (VPN-R22/VPN-R36). The relay's literal-address refusal stays unchanged — it
-  is the invariant this spelling satisfies, not a defect the spelling works
-  around.
+  (VPN-R36). Since d242 the listener also carries an address target, so
+  `socks5://` is no longer refused — but `socks5h` stays the exported
+  spelling on its own merit: a name is what lets the exit resolve and pin, so
+  a client that can send one should.
 - **Every conventional variable is exported in both cases, with identical
   values**: `HTTP_PROXY`/`http_proxy`, `HTTPS_PROXY`/`https_proxy`,
   `ALL_PROXY`/`all_proxy`, `NO_PROXY`/`no_proxy`. One table in
