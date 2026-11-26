@@ -127,9 +127,10 @@ Closing the gap needs six things the proofs do not provide:
    vocabulary, never a distinct signal that confirms a tunnel.
 6. **A stated position on padding** — out of scope, recorded as such.
 
-DoS answers to none of them: an unauthenticated flood still costs one verify
-(d104's arithmetic), and rate limiting stays hygiene rather than a security
-control.
+DoS answers to none of them: an unauthenticated flood still costs one
+certificate verify, a pinned peer pays that plus the proof's verify, and rate
+limiting stays hygiene rather than a security control (d131's cost section
+carries the arithmetic).
 
 ## Decision
 
@@ -390,8 +391,10 @@ failing closed.
 
 **Unchanged**
 
-- The DoS surface: verify first, handshake second; unauthenticated floods
-  still cost one verify, and rate limiting stays hygiene.
+- The DoS surface: the outer proof first, then the handshake; an
+  unauthenticated flood still costs one certificate verify and an admitted
+  peer pays the proof verify plus a handshake, and rate limiting stays
+  hygiene.
 - End-to-end target validation (VPN-R29, VPN-R55): the inner session
   authenticates the two nodes and never the target; the client still sees the
   target's own certificate.

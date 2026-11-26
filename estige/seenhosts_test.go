@@ -138,10 +138,10 @@ func TestSeenHostIsThrottled(t *testing.T) {
 	if !strings.Contains(capture.text, "relay_laptop") {
 		t.Fatal("a different peer's hint was suppressed")
 	}
-	// Age the record past the window: the same peer becomes visible again.
-	key := roleExit + "\x00" + "relay_bazzite" + "\x00" + public
+	// Age the WINDOW past its span: suppression is per window, so the same
+	// peer becomes visible again.
 	seenHostRecent.mu.Lock()
-	seenHostRecent.last[key] = first.Add(-2 * seenHostWindow)
+	seenHostRecent.windowStart = first.Add(-2 * seenHostWindow)
 	seenHostRecent.mu.Unlock()
 	if err := logSeenHost(roleExit, "", "relay_bazzite", public); err != nil {
 		t.Fatal(err)
@@ -151,22 +151,37 @@ func TestSeenHostIsThrottled(t *testing.T) {
 	}
 }
 
-// TestSeenHostFullTableStillLogs: the cap bounds memory, not the hint. A
-// prober minting more distinct certificates than the table holds must not be
-// able to silence the next genuine hint — the oldest entry makes room.
-func TestSeenHostFullTableStillLogs(t *testing.T) {
+// TestSeenHostEmissionIsBudgeted: the window has a TOTAL budget, so a prober
+// minting a fresh certificate per request cannot turn the mandated hint into a
+// warn-log amplifier. Distinct peers inside the budget all log; past it the
+// window stays quiet until it rolls over.
+func TestSeenHostEmissionIsBudgeted(t *testing.T) {
 	capture := captureSeen(t)
-	for range seenHostCap {
+	for i := range seenHostBudget {
+		capture.text = ""
 		if err := logSeenHost(roleExit, "", "relay_filler", seenCert(t)); err != nil {
 			t.Fatal(err)
 		}
+		if capture.text == "" {
+			t.Fatalf("hint %d inside the budget was suppressed", i+1)
+		}
 	}
 	capture.text = ""
-	genuine := seenCert(t)
-	if err := logSeenHost(roleExit, "", "relay_genuine", genuine); err != nil {
+	if err := logSeenHost(roleExit, "", "relay_genuine", seenCert(t)); err != nil {
+		t.Fatal(err)
+	}
+	if capture.text != "" {
+		t.Fatal("the budget did not bound a window's emissions")
+	}
+
+	// Roll the window over: the budget reopens and a genuine hint logs again.
+	seenHostRecent.mu.Lock()
+	seenHostRecent.windowStart = time.Now().Add(-2 * seenHostWindow)
+	seenHostRecent.mu.Unlock()
+	if err := logSeenHost(roleExit, "", "relay_genuine", seenCert(t)); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(capture.text, "relay_genuine") {
-		t.Fatal("a full table swallowed the genuine hint")
+		t.Fatal("the next window did not reopen the budget")
 	}
 }

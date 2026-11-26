@@ -276,23 +276,27 @@ constant cost:
   compare-every-row shape existed to keep a linear scan from leaking, and a
   map keyed by the presented name has nothing to leak. The work is one
   lookup, not the credential check.
-- **Exactly one Ed25519 verify is computed per proof** — the matched
-  public key's signature check, full-width by the primitive. No match
-  means no verify: that request answers the camouflage 404 having paid
-  one lookup. The whole cost argument: authentication is O(1) map work plus
-  a single verify, independent of set size and of which name was presented —
-  a fifty-relay exit pays what a one-relay exit pays. The verify itself costs ~30–80µs (vs. a MAC's sub-microsecond):
+- **An unauthenticated request pays one certificate verify; a pinned one pays
+  two.** The presented `e-pub` certificate is parsed and its self-signature
+  checked _before_ any pin is consulted — that is what makes a malformed or
+  CA-shaped certificate a refusal rather than a lookup — so every request, from
+  anyone, costs one `x509.ParseCertificate` plus one Ed25519 verify. A request
+  whose certificate matches a pin then pays the proof's own verify as well.
+  Both are the primitive's full-width check and independent of the set's size:
+  a fifty-relay exit pays what a one-relay exit pays. At ~30–80µs per verify
+  that is two verifies per admitted exchange and one per refused probe —
   negligible at handshake rates, a few percent of a core at a few hundred
-  per-request authentications per second (modes C/E) — recorded in the
-  consequences with its DoS arithmetic.
+  authentications per second (modes C/E), and the DoS arithmetic in d169 rests
+  on exactly this number.
 - **Each replay cache costs one map probe per _verified_ proof** — forged
   and unknown-name proofs never reach either — and its memory is the cap,
   independent of attack traffic: the exit's ring grows only on genuine
   handshakes, the relay's only on exit proofs it accepted, so an attacker
   without a principal's private key cannot grow that side's ring. Two rings at
   ≈2 MiB each is the whole memory cost of replay protection in both directions.
-- The residual timing delta — an unknown name skips its one verify,
-  tens of microseconds — is below network jitter and against a name that
-  is a log-safe label the operator's logs already print; the load-bearing
-  oracle control is VPN-R34's byte-identical response vocabulary, not
-  microsecond flatness (the dummy-key flatten is rejected below).
+- The residual timing delta — an unknown name skips the proof verify that a
+  pinned one also pays, tens of microseconds — is below network jitter and
+  against a name that is a log-safe label the operator's logs already print;
+  the load-bearing oracle control is VPN-R34's byte-identical response
+  vocabulary, not microsecond flatness (the dummy-key flatten is rejected
+  below).

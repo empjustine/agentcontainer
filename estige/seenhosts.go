@@ -17,58 +17,51 @@ const eventSeenHosts = "seen_hosts"
 
 // The hint is operator evidence, not an event log: a well-formed but
 // unpublished certificate can be minted by anyone, and the exit's path is
-// Funnel-public, so every request would otherwise cost one warn line with
-// ~1.1 KB of attacker-chosen public material. Repeats inside the window are
-// dropped, and the map is swept at its cap so the dedupe itself cannot grow.
+// Funnel-public, so an unbounded event would cost one warn line with ~1.1 KB
+// of attacker-chosen public material per request. The budget is therefore a
+// total per window, not a per-peer one: no amount of distinguishable
+// certificates can buy more than seenHostBudget lines a minute. The trade is
+// stated in d236 — a prober can consume the budget and mute hints for the rest
+// of the window, which is strictly better than an unbounded amplifier on a
+// public path.
 const (
 	seenHostWindow = time.Minute
-	seenHostCap    = 256
+	seenHostBudget = 32
 )
 
 var seenHostRecent = struct {
-	mu   sync.Mutex
-	last map[string]time.Time
-}{last: make(map[string]time.Time, seenHostCap)}
+	mu          sync.Mutex
+	windowStart time.Time
+	last        map[string]time.Time
+}{last: make(map[string]time.Time, seenHostBudget)}
 
 // resetSeenHosts forgets the window. It exists for tests that assert the hint
-// IS emitted: the cache is process-global, so a repeat run of the same test
-// (go test -count=2) would otherwise still see its own first emission and the
-// mandated-hint assertion could never be repeated.
+// IS emitted: the budget is process-global, so a repeat run of the same test
+// (go test -count=2) would otherwise still be inside the first run's window.
 func resetSeenHosts() {
 	seenHostRecent.mu.Lock()
 	defer seenHostRecent.mu.Unlock()
-	seenHostRecent.last = make(map[string]time.Time, seenHostCap)
+	seenHostRecent.windowStart = time.Time{}
+	seenHostRecent.last = make(map[string]time.Time, seenHostBudget)
 }
 
-// seenHostSuppressed reports whether this peer's hint was already logged
-// within the window, recording it when it was not.
+// seenHostSuppressed reports whether this peer's hint is already covered by
+// the current window — logged before, or past the window's budget.
 func seenHostSuppressed(role, name, public string) bool {
 	key := role + "\x00" + name + "\x00" + public
 	now := time.Now()
 	seenHostRecent.mu.Lock()
 	defer seenHostRecent.mu.Unlock()
-	if at, ok := seenHostRecent.last[key]; ok && now.Sub(at) < seenHostWindow {
+	if now.Sub(seenHostRecent.windowStart) >= seenHostWindow {
+		// A new window: the previous one's peers and its spent budget go.
+		seenHostRecent.windowStart = now
+		seenHostRecent.last = make(map[string]time.Time, seenHostBudget)
+	}
+	if _, logged := seenHostRecent.last[key]; logged {
 		return true
 	}
-	if len(seenHostRecent.last) >= seenHostCap {
-		// The table is a bound on memory, not a licence to go silent: a
-		// prober minting fresh certificates could otherwise fill it and
-		// silence the genuine hint for the rest of the window. Drop expired
-		// entries first, then evict the OLDEST so the newcomer still logs.
-		for seenKey, at := range seenHostRecent.last {
-			if now.Sub(at) >= seenHostWindow {
-				delete(seenHostRecent.last, seenKey)
-			}
-		}
-		for len(seenHostRecent.last) >= seenHostCap {
-			oldestKey, oldest := "", now
-			for seenKey, at := range seenHostRecent.last {
-				if oldestKey == "" || at.Before(oldest) {
-					oldestKey, oldest = seenKey, at
-				}
-			}
-			delete(seenHostRecent.last, oldestKey)
-		}
+	if len(seenHostRecent.last) >= seenHostBudget {
+		return true
 	}
 	seenHostRecent.last[key] = now
 	return false

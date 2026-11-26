@@ -119,11 +119,14 @@ intermediary must never reuse or store the response for another request. The
 camouflage 404 stays byte-identical and gains nothing (VPN-R34).
 
 A valid `e-pub` that is not in the local trust set also fails the connection.
-It emits the `seen_hosts` event once per distinct peer per one-minute window,
-whether the trusted set is empty or not, and the dedupe table is swept at its
-cap — so an unauthenticated Funnel peer cannot turn a mandated hint into a
-warning amplifier by minting a fresh certificate per request. That event is a
-hint for an operator; it never grants trust.
+It emits the `seen_hosts` event at most once per distinct peer per one-minute
+window, under a **total budget of 32 events per window**, whether the trusted
+set is empty or not — so an unauthenticated Funnel peer cannot turn a mandated
+hint into a warning amplifier by minting a fresh certificate per request. The
+trade is explicit: a prober that spends the budget mutes hints for the rest of
+that window, and the alternative (an unbounded line per request on a
+Funnel-public path, each carrying ~1.1 KB of attacker-chosen material) is
+worse. That event is a hint for an operator; it never grants trust.
 
 The two refusals are not symmetric, and only one is terminal. The relay's own
 check of the exit's proof stops the dial at the rung it failed on. The exit's
