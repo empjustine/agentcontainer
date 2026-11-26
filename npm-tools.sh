@@ -11,6 +11,15 @@
 # construction rather than by a second bookkeeping file to keep in sync.
 #
 # Usage: npm_tools_ensure <repo-root>
+
+# This file is SOURCED, so $0 is the caller's script and `dirname "$0"` is the
+# caller's directory — resolved against the caller's cwd. A caller that cds
+# before calling in (lint.sh does exactly that in its `[dir]` mode, then calls
+# pnpm_tools_ensure) would therefore lose the sibling dev-tools.sh and abort
+# with `.: cannot open ./dev-tools.sh` (docs/d243). So the directory is resolved
+# once, here, while the cwd still means what $0 meant.
+_npm_tools_dir=$(CDPATH='' cd "$(dirname "$0")" && pwd)
+
 npm_tools_ensure() {
 	_npm_root=$1
 	_npm_lock="$_npm_root/package-lock.json"
@@ -52,7 +61,7 @@ npm_tools_ensure() {
 pnpm_tools_ensure() {
 	_pnpm_root=$1
 	# shellcheck source-path=SCRIPTDIR source=dev-tools.sh
-	. "$(dirname "$0")/dev-tools.sh"
+	. "$_npm_tools_dir/dev-tools.sh"
 	for _pnpm_lock in "$_pnpm_root"/pi-*/pnpm-lock.yaml; do
 		[ -f "$_pnpm_lock" ] || continue
 		_pnpm_dir=${_pnpm_lock%/pnpm-lock.yaml}

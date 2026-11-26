@@ -91,19 +91,21 @@ family one policy; each of the four asserts it in its own suite.
   whose only content is "the host's declaration is narrower than its runtime" is
   the honest minimum; a returned `[]` would REPLACE the catalog with nothing.
 - **A gate now needs a network install — two of them do.** `./check-types.sh`
-  and `./lint.sh` each read the six `node_modules` trees; the type-aware oxlint
-  leg resolves the same imports, so it acquires them too (d243) rather than
-  reporting their absence as findings. On a host with no registry the pi entries
-  cannot resolve their types, and the install path fails loudly with a
-  `./dev-tools.sh pnpm` hint rather than skipping. The rest of the sweep
-  (biome, knip, ruff, ty, the text gates) stays offline.
+  and `./lint.sh` each read the `pi-*` folders' `node_modules` trees (eight
+  today; six when this record landed, the newer providers adding one frozen lock
+  each); the type-aware oxlint leg resolves the same imports, so it acquires them
+  too (d243) rather than reporting their absence as findings. On a host with no
+  registry the pi entries cannot resolve their types, and the install path fails
+  loudly with a `./dev-tools.sh pnpm` hint rather than skipping. The rest of the
+  sweep (biome, knip, ruff, ty, the text gates) stays offline.
 - **Third-party shell now sits in the tree.** shellcheck's find prunes
   `node_modules` at any depth (pi-tui ships a `native/linux/build.sh`), and
   `.gitignore` covers the store and the trees; nothing else in the gates walks
   into them.
-- **Six lockfiles.** `pnpm-lock.yaml` is per folder, ~1.1k lines each, because a
-  copy unit carries its own lock; the resolution is identical in all six and the
-  bytes are the devDependency's own graph, not this repo's choices.
+- **One lockfile per folder — six when this record landed.** `pnpm-lock.yaml` is
+  per folder, ~1.1k lines each, because a copy unit carries its own lock; the
+  resolution is identical in all of them and the bytes are the devDependency's
+  own graph, not this repo's choices.
 - **The peer range still says `>=1.0.0`.** The devDependency is the version the
   types were checked against; the peer is the runtime contract with whatever host
   loads the package. The two answer different questions and both stay.

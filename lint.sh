@@ -231,8 +231,17 @@ dev_tool_run ruff ruff check .
 # uv sync --frozen: ty's prerequisite and the python gate's npm-ci —
 # installs the tracked uv.lock into .venv exactly; --frozen fails on a
 # stale lock instead of silently re-resolving it.
+#
+# The python legs are anchored at $repo_root rather than at the sweeping
+# directory: uv.lock, pyproject.toml, .venv and the per-unit libs are repo-level
+# facts, and `./lint.sh <dir>` used to cd away from them and abort in ty with
+# `--python .venv: does not point to a Python executable` (measured; the
+# documented `[path]` mode only reached that leg after the npm-tools.sh source
+# was made cd-proof, d243). `uv sync` runs in the repo root for the same reason:
+# uv would otherwise walk up to find the project while ty was handed a relative
+# .venv that does not exist under the swept directory.
 log_info "uv sync --frozen (ty's environment)"
-dev_tool_run uv uv sync --frozen
+( cd "$repo_root" && dev_tool_run uv uv sync --frozen )
 
 # ty (gating): python type checking — tsc's counterpart. The flags carry
 # what ty 0.0.95 parses but won't apply from [tool.ty.environment]
@@ -240,7 +249,10 @@ dev_tool_run uv uv sync --frozen
 # (docs/d113) that makes bare import log / import _hf_cache resolve the
 # way the scripts are written to run.
 log_info "ty (gating — python types)"
-dev_tool_run ty ty check . --python .venv --extra-search-path llm-local-inference/lib --extra-search-path llm-local-inference --extra-search-path datalakehouse
+dev_tool_run ty ty check . --python "$repo_root/.venv" \
+	--extra-search-path "$repo_root/llm-local-inference/lib" \
+	--extra-search-path "$repo_root/llm-local-inference" \
+	--extra-search-path "$repo_root/datalakehouse"
 
 # Capability-bearing URL gate (docs/d086): a funnel mount path in a tracked
 # file is the mode A credential written down — it leaks the only credential
@@ -307,7 +319,12 @@ fi
 # — the vocabulary, titles, id spelling, the nesting rules, and the file/edge
 # agreement. Offline and textual: it walks markdown and fetches nothing.
 log_info "spec graph (gating — docs/spec-graph-standard.md)"
-"$repo_root/node-run.sh" docs/spec-check.mjs ||
+# The script is named by ABSOLUTE path and the graph root is passed explicitly:
+# spec-check reads the tree it walks from its argv (default: its cwd) and the
+# `[path]` mode has already cd'd away, so a relative script path failed to load
+# and an implicit root validated only the swept subtree — every record parented
+# to a unit then read as dangling (docs/d243).
+"$repo_root/node-run.sh" "$repo_root/docs/spec-check.mjs" "$repo_root" ||
 	log_die 96 "spec graph is off-contract" \
 		hint="fix the findings above (docs/spec-graph-standard.md)"
 
