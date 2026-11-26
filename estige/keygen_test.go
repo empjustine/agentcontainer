@@ -10,6 +10,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -159,7 +160,7 @@ func sum256(pub ed25519.PublicKey) []byte {
 }
 
 func TestKeyCheckLoadsBothRoleStores(t *testing.T) {
-	summary, err := checkStore(storeRoot())
+	summary, err := checkStore(mustStoreRoot(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -174,5 +175,51 @@ func TestKeyCheckLoadsBothRoleStores(t *testing.T) {
 func TestKeyCheckRefusesEmptyStore(t *testing.T) {
 	if _, err := checkStore(t.TempDir()); err == nil {
 		t.Fatal("key check accepted a store with no role files")
+	}
+}
+
+// TestKeyCheckRefusesAStoreBootRefuses: the gate must not answer "ok" for a
+// store the exit then crash-loops on. Egress tables are compiled at boot, so
+// key check compiles them too.
+func TestKeyCheckRefusesAStoreBootRefuses(t *testing.T) {
+	for _, block := range []string{
+		`{"allowCidrs":["10.0.0.0/33"]}`, // prefix length out of range
+		`{"ports":[0]}`,                  // no such port
+		`{"allowCidrs":["not-a-cidr"]}`,
+	} {
+		t.Run(block, func(t *testing.T) {
+			store := newTestStore(t)
+			store.write(t, "relay.json", fmt.Sprintf(`{"endpoint":"wss://exit.example:8443/vpn","exit":[{"name":"exit-home","public":"%s"}]}`, store.public))
+			store.write(t, "exit.json", fmt.Sprintf(`{"relays":[{"name":"relay_bazzite","public":"%s"}],"egress":%s}`, store.public, block))
+			if _, err := checkStore(store.root); err == nil {
+				t.Fatalf("key check accepted %s, which boot refuses", block)
+			}
+			// And the boot path refuses it too, so the two agree: the exit
+			// compiles the table in enableTunnel, which is the step that
+			// would otherwise crash-loop after this gate said ok.
+			t.Setenv("XDG_DATA_HOME", filepath.Dir(store.root))
+			if err := (&server{}).enableTunnel(); err == nil {
+				t.Fatal("enableTunnel accepted an invalid egress table")
+			}
+		})
+	}
+}
+
+// TestStoreRootNamesItsCause: an unresolvable root reports why, per role,
+// instead of a bare "store : stat :".
+func TestStoreRootNamesItsCause(t *testing.T) {
+	t.Setenv("HOME", "")
+	t.Setenv("XDG_DATA_HOME", "")
+	if _, err := storeRoot(); err == nil {
+		t.Fatal("storeRoot resolved without HOME or XDG_DATA_HOME")
+	}
+	_, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), relaySelection{}, false, true)
+	if err == nil || !strings.Contains(err.Error(), "$HOME") {
+		t.Fatalf("relay boot error = %v, want it to name the unresolvable root", err)
+	}
+	s := &server{}
+	err = s.enableTunnel()
+	if err == nil || !strings.Contains(err.Error(), "$HOME") {
+		t.Fatalf("exit boot error = %v, want it to name the unresolvable root", err)
 	}
 }

@@ -47,7 +47,10 @@ end to end and never trust the node in the middle.
 > `<principal>.crt`, printing the `{name, public}` row to paste into the peer's
 > `relay.json`/`exit.json`. `estige public -f <key>` reprints that row from an
 > existing key; `estige key check` loads the role stores with the same strict
-> parser boot uses. A re-mint is a pin change, not an in-place rotation.
+> parser boot uses _and_ compiles their egress tables the way boot does, so the
+> pre-enable gate cannot answer "ok" for a store the node then refuses.
+>
+> A re-mint is a pin change, not an in-place rotation.
 
 Historical reference for the deleted proxy: llama-swap,
 github.com/mostlygeek/llama-swap (`internal/router/peer.go`) — estige was
@@ -190,7 +193,7 @@ Provisioning is the binary's own verbs:
 ```console
 $ estige keygen -principal exit-home     # mint key + certificate; prints the {name, public} row
 $ estige public -f prv/exit-home.der     # reprint that row from an existing key
-$ estige key check                       # load both role files with the parser boot uses
+$ estige key check                       # load the role files and compile their egress like boot
 ```
 
 ## Build & run

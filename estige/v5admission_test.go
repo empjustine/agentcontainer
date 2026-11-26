@@ -322,7 +322,7 @@ func TestStagedExitRotationPinsEveryRow(t *testing.T) {
 // argv may name the peer (exit row / security principal) and re-route the
 // endpoint; the store's first row is only the implicit default.
 func TestRelaySelectionNamesTheExit(t *testing.T) {
-	store, err := loadRelayStore(storeRoot())
+	store, err := loadRelayStore(mustStoreRoot(t))
 	if err != nil {
 		t.Fatal(err)
 	}

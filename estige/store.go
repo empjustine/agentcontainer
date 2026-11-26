@@ -21,12 +21,12 @@ import (
 	"strings"
 )
 
-func storeRoot() string {
-	root, err := resolveStoreDir("")
-	if err != nil {
-		return ""
-	}
-	return root
+// storeRoot resolves the store directory a role reads. The error is returned
+// rather than folded into an empty path: an unresolvable root ($HOME and
+// XDG_DATA_HOME both unset) is the cause of a failed boot, and a bare
+// "store : stat :" hides the step that owns it (d045's cause-chain rule).
+func storeRoot() (string, error) {
+	return resolveStoreDir("")
 }
 
 const (

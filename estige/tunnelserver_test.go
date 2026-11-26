@@ -22,7 +22,7 @@ import (
 func TestExitStoreEgressGrammar(t *testing.T) {
 	t.Run("absent means the defaults", func(t *testing.T) {
 		writeTestExitJSON(t, nil)
-		store, err := loadExitStore(storeRoot())
+		store, err := loadExitStore(mustStoreRoot(t))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -32,7 +32,7 @@ func TestExitStoreEgressGrammar(t *testing.T) {
 	})
 	t.Run("both halves", func(t *testing.T) {
 		writeTestExitJSON(t, &egressConfig{AllowCidrs: []string{"127.0.0.0/8"}, Ports: []uint16{8443}})
-		store, err := loadExitStore(storeRoot())
+		store, err := loadExitStore(mustStoreRoot(t))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -54,7 +54,7 @@ func TestExitStoreEgressGrammar(t *testing.T) {
 		t.Run("refused: "+block, func(t *testing.T) {
 			entry := fmt.Sprintf(`"name":%q,"public":%q`, testV5Principal, encodeEPub(testV5CertDER))
 			writeTestRoleFile(t, "exit.json", fmt.Sprintf(`{"relays":[{%s}],"egress":%s}`, entry, block))
-			if _, err := loadExitStore(storeRoot()); err == nil {
+			if _, err := loadExitStore(mustStoreRoot(t)); err == nil {
 				t.Fatalf("exit.json egress %s = nil error, want refusal", block)
 			}
 		})
@@ -453,7 +453,7 @@ func TestSessionResponsesCarryExitProofAndForbidCaching(t *testing.T) {
 	s := newTunnelServer(t, true, egressConfig{})
 	backend := newHTTPServer(t, s)
 	tunnelURL := mustTunnelURL(t, backend)
-	store, err := loadRelayStore(storeRoot())
+	store, err := loadRelayStore(mustStoreRoot(t))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -511,7 +511,11 @@ func (t *tunnelServer) runSession(sessionCtx context.Context, s tunnelStream, ke
 // arming fact and the only config surface — credentials, admitted relays and
 // egress all arrive from it (d236), never from the environment.
 func (s *server) enableTunnel() error {
-	store, err := loadExitStore(storeRoot())
+	root, err := storeRoot()
+	if err != nil {
+		return fmt.Errorf("exit store: %w", err)
+	}
+	store, err := loadExitStore(root)
 	if err != nil {
 		return err
 	}

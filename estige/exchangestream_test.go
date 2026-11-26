@@ -66,7 +66,7 @@ func TestParseTraceparent(t *testing.T) {
 func TestRetiredH1WindowedFailsClosed(t *testing.T) {
 	s := newTunnelServer(t, true, egressConfig{})
 	backend := newHTTPServer(t, s)
-	store, err := loadRelayStore(storeRoot())
+	store, err := loadRelayStore(mustStoreRoot(t))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -376,7 +376,7 @@ func mustTunnelURL(t *testing.T, proxy *httptest.Server) *url.URL {
 
 func testV5Headers(t *testing.T) http.Header {
 	t.Helper()
-	store, err := loadRelayStore(storeRoot())
+	store, err := loadRelayStore(mustStoreRoot(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -390,6 +390,17 @@ func testV5Headers(t *testing.T) http.Header {
 func applyTestV5Headers(t *testing.T, hdr http.Header) {
 	t.Helper()
 	maps.Copy(hdr, testV5Headers(t))
+}
+
+// mustStoreRoot is storeRoot for fixtures: a test that cannot resolve the
+// suite store has no business continuing.
+func mustStoreRoot(t *testing.T) string {
+	t.Helper()
+	root, err := storeRoot()
+	if err != nil {
+		t.Fatalf("store root: %v", err)
+	}
+	return root
 }
 
 // assertNoAdmissionMaterial fails when a log dump carries anything an
@@ -451,7 +462,7 @@ func dialTunnelWithHeaders(t *testing.T, u *url.URL, hdr http.Header) (tunnelStr
 	if err != nil {
 		return nil, err
 	}
-	store, err := loadRelayStore(storeRoot())
+	store, err := loadRelayStore(mustStoreRoot(t))
 	if err != nil {
 		_ = ws.Close()
 		return nil, err

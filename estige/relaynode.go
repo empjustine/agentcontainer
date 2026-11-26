@@ -131,7 +131,11 @@ const (
 // line (d163).
 func relayConfigFromEnv(proxyAddr, socksAddr string, selection relaySelection, legacyIPRelay, insecureExit bool) (relayConfig, error) {
 	var cfg relayConfig
-	store, err := loadRelayStore(storeRoot())
+	root, err := storeRoot()
+	if err != nil {
+		return cfg, fmt.Errorf("relay store: %w", err)
+	}
+	store, err := loadRelayStore(root)
 	if err != nil {
 		return cfg, fmt.Errorf("relay store: %w", err)
 	}
