@@ -111,12 +111,13 @@ dev_tool_run shfmt find . -path ./node_modules -prune -o \
 # the tree without a single edit here. The pin lives in dev-tools.sh's one
 # table (docs/d139; the repo commits no mise.toml — docs/d051/d082); Termux has
 # no mise and takes the host package's oxfmt, so a bump there re-runs the
-# one-shot reformat.
+# one-shot reformat — check, do not assume: 0.75.0 → 0.79.0 reformatted nothing
+# (1455 files already correct, measured 2026-11-26).
 OXFMT_GLOB='**/*.md'
 log_info "oxfmt markdown (gating — canonical markdown, pinned)"
 dev_tool_run oxfmt oxfmt --check "$OXFMT_GLOB" ||
 	log_die 96 "markdown is not oxfmt-canonical" \
-		hint="fix: oxfmt --write '**/*.md' (pinned: mise exec oxfmt@0.75.0 -- oxfmt --write '**/*.md')"
+		hint="fix: oxfmt --write '**/*.md' (pinned: mise exec oxfmt@$(dev_tool_pin oxfmt) -- oxfmt --write '**/*.md')"
 
 npm_tools_ensure "$repo_root"
 [ -x "$repo_root/node_modules/.bin/biome" ] ||
@@ -126,7 +127,7 @@ npm_tools_ensure "$repo_root"
 
 # biome — the JS/TS lint gate. RULES ONLY on purpose (plain `biome lint`, not
 # `check`): the formatter and the import organizer stay host-side manual
-# until the markdown-formatting policy is decided (the pinned 2.6.3 can
+# until the markdown-formatting policy is decided (the pinned 2.6.9 can
 # format markdown; this tree never has), so this stage never fights that
 # open decision. The pin is AGED, not @latest, matching every other gate
 # pin: a deliberate cooldown, because a lint pin that moves between runs
@@ -138,7 +139,7 @@ log_info "biome lint (gating — rule set in biome.jsonc; pinned by package-lock
 "$repo_root/node_modules/.bin/biome" lint . --error-on-warnings
 
 # oxlint (gating): the type-aware JS/TS lint half biome does not run here.
-# Biome 2.6.3 does build a semantic model, but its typed rules sit in the
+# Biome 2.6.9 does build a semantic model, but its typed rules sit in the
 # NURSERY group (noFloatingPromises, noMisusedPromises, …), and this tree
 # enables no nursery rule by policy (biome.jsonc is an explicit stable list),
 # so no-floating-promises / no-base-to-string / require-array-sort-compare
@@ -154,13 +155,18 @@ log_info "biome lint (gating — rule set in biome.jsonc; pinned by package-lock
 # @oxlint/binding-android-arm64 kills the process with SIGILL at dlopen. So the
 # pinned binary is asked first, and a host that cannot run it runs the HOST's
 # oxlint with typeAware off — every rule that needs no type checker — while
-# saying what that leaves unproven. --deny-warnings carries the gate in that
-# mode: with --config, -D warning alone no longer sets the exit status
-# (measured on 1.94, the version the host package ships).
+# saying what that leaves unproven.
+#
+# --deny-warnings is what carries the exit status, in BOTH branches. `-D warning`
+# reads as a severity floor and is not one: -D/--deny names a RULE, so
+# `-D warning` asked for a rule called "warning" and gated nothing (measured on
+# the 1.95.0 pin, d241: a warning-level finding exits 0 under it and 1 under
+# --deny-warnings). The earlier flag is gone rather than kept beside the real
+# one, so no reader has to work out which of the two is live.
 log_info "oxlint (gating — type-aware JS/TS lint)"
 _oxlint_pinned="$repo_root/node_modules/.bin/oxlint"
 if [ -x "$_oxlint_pinned" ] && "$_oxlint_pinned" --version >/dev/null 2>&1; then
-	( cd "$repo_root" && "$_oxlint_pinned" . -D warning )
+	( cd "$repo_root" && "$_oxlint_pinned" . --deny-warnings )
 else
 	_oxlint_host=$(command -v oxlint || true)
 	[ -n "$_oxlint_host" ] ||
@@ -172,7 +178,7 @@ else
 	log_warn "the pinned oxlint cannot load here — the host's oxlint takes the leg with typeAware off" \
 		pinned="$_oxlint_pinned" host="$_oxlint_host" \
 		unproven="typescript/no-floating-promises, typescript/no-misused-promises, typescript/require-array-sort-compare"
-	( cd "$repo_root" && "$_oxlint_host" . -D warning --deny-warnings --config "$_oxlint_cfg" )
+	( cd "$repo_root" && "$_oxlint_host" . --deny-warnings --config "$_oxlint_cfg" )
 fi
 
 # check-types (gating): the tsconfig strictness program — tsc over every .mjs

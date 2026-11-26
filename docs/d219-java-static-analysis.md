@@ -56,7 +56,7 @@ and skips loudly without a JDK/Maven, the same posture as golangci-lint.
 A waiver is a line in that file with its reason, never a `@SuppressWarnings`
 scattered through the classes.
 
-**The toolchain pins are in `dev-tools.sh`** (d139): JDK 21 and Maven 3.9.16,
+**The toolchain pins are in `dev-tools.sh`** (d139): JDK 21 and Maven 3.10.2,
 acquired on demand and not part of `DEV_TOOLS_ALL` — no other unit needs them.
 The analyzers themselves are Maven plugins pinned in `sbex/pom.xml`, so the
 plugin set moves with the pom, not with a second tool table.

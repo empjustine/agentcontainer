@@ -37,8 +37,15 @@
 # the functions below log through it.
 
 # The one pin table (docs/d139). A value is a mise tool version specifier;
-# @latest means "whatever the environment offers", the posture the floating
-# lint legs already had.
+# @latest means "whatever the environment offers".
+#
+# Values track the TERMUX HOST PACKAGES (docs/d241): both target hosts run one
+# environment, so a tool version that differs between them is a gate whose
+# verdict depends on the machine. Where mise's registry lags the host package
+# the value is mise's newest, because `mise exec` cannot install a version the
+# registry does not list — the skew is named beside each such pin (measured
+# 2026-11-26, `mise ls-remote`):
+#   oxfmt 0.79.0 (Termux 0.80.0) · uv 0.13.9 (0.13.10) · ty 0.0.108 (0.0.111)
 dev_tool_pin() {
 	case "$1" in
 	go) printf '%s\n' '1.27' ;;
@@ -48,12 +55,22 @@ dev_tool_pin() {
 	# only (docs: 1.4.1-1.5.6), so datalakehouse must not meet a bare
 	# v2.x on a PATH (datalakehouse README).
 	duckdb) printf '%s\n' '1.5.6' ;;
-	oxfmt) printf '%s\n' '0.75.0' ;;
+	oxfmt) printf '%s\n' '0.79.0' ;;
 	# The pi extensions' type source (@earendil-works/pi-coding-agent) is a real
 	# devDependency; pnpm is what installs it WITHOUT a copy per folder — its
 	# content-addressed store hardlinks one unpacked copy into six node_modules.
-	pnpm) printf '%s\n' '12.21.0' ;;
-	shellcheck | shfmt | jq | ruff | uv | ty) printf '%s\n' 'latest' ;;
+	pnpm) printf '%s\n' '12.23.0' ;;
+	# Pinned rather than floated because each prints the verdict ./lint.sh gates
+	# on, and a version that moves between runs is a gate whose meaning moves
+	# (d137). jq only joins the output the others produce and keeps floating.
+	shellcheck) printf '%s\n' '0.11.0' ;;
+	ruff) printf '%s\n' '0.17.6' ;;
+	# Termux's own shfmt is a `(devel)` build with no version to match (d241),
+	# so this pin unifies the dev hosts and states what the gate ran with.
+	shfmt) printf '%s\n' '3.14.1' ;;
+	jq) printf '%s\n' 'latest' ;;
+	uv) printf '%s\n' '0.13.9' ;;
+	ty) printf '%s\n' '0.0.108' ;;
 	# sbex's Java gate (docs/d219). The analyzers are Maven plugins pinned in
 	# sbex/pom.xml, so the toolchain is only the JDK and Maven. Deliberately NOT
 	# in DEV_TOOLS_ALL: no other unit needs them, and the Java leg acquires them
@@ -61,7 +78,7 @@ dev_tool_pin() {
 	# 21.0.x patch bump must not re-pin the gate; Maven is exact because the
 	# plugin resolution it performs is part of what the gate means.
 	java) printf '%s\n' '21' ;;
-	maven) printf '%s\n' '3.9.16' ;;
+	maven) printf '%s\n' '3.10.2' ;;
 	*)
 		printf 'dev-tools.sh: unknown tool: %s\n' "$1" >&2
 		return 2

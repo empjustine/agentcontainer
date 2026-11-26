@@ -72,6 +72,3 @@ public class DownstreamClient {
 			.timeout(RESPONSE_TIMEOUT);
 	}
 }
-
-/** The downstream's payload, kept apart from anything this app persists. */
-record InventoryStatus(String sku, int available) {}

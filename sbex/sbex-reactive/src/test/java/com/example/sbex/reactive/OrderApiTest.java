@@ -1,12 +1,12 @@
 package com.example.sbex.reactive;
 
-import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.when;
 
 import com.example.sbex.core.Order;
 import com.example.sbex.core.OrderStatus;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webflux.test.autoconfigure.WebFluxTest;
@@ -58,8 +58,12 @@ class OrderApiTest {
 			.exchange()
 			.expectStatus().isBadRequest()
 			.expectBody()
-			// The field order follows the binding, not the record: assert the
-			// customer error exists rather than its position.
-			.jsonPath("$.fieldErrors[?(@.field == 'customerId')]").value(hasSize(1));
+			// The field order follows the binding, not the record: project the
+			// filter onto the field names and compare the SET, so the assertion is
+			// "exactly one error, and it names the customer" however they are
+			// ordered. (A matcher could also say this, but the WebTestClient
+			// value(Matcher) overload is deprecated for removal in Spring 7.)
+			.jsonPath("$.fieldErrors[?(@.field == 'customerId')].field")
+			.isEqualTo(List.of("customerId"));
 	}
 }
