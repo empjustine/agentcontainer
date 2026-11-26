@@ -1,7 +1,7 @@
 ---
 id: d131
 type: module-design
-status: draft
+status: active
 title: "d131 — the v4 credential's proof mechanism: envelopes, verification and the version counters"
 parent: estige
 depends-on: [d104]

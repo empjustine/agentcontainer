@@ -285,3 +285,124 @@ func TestH2WindowedRefusesUntrustedCertificate(t *testing.T) {
 		t.Fatalf("untrusted window answered %d, want camouflage 404", resp.StatusCode)
 	}
 }
+
+// TestH2WindowedRotationDoesNotNeedABusyReader drives the carrier directly and
+// keeps the reader IDLE while the writer crosses the window bound. A rotation
+// used to clear the current window and park on a condition only the reader
+// could signal, so with the reader between reads (not blocked, merely not
+// reading yet) both goroutines slept: the writer never opened the next window
+// and a live CONNECT died on its read bound. The rotation must end the current
+// window and let the next reader pick the handoff up.
+func TestH2WindowedRotationDoesNotNeedABusyReader(t *testing.T) {
+	upstream := newHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("X-Upstream-Bytes", strconv.Itoa(len(body)))
+		_, _ = io.WriteString(w, "idle-reader-ok")
+	}))
+	upPort := portOf(t, upstream.Listener.Addr().String())
+
+	s := newTunnelServer(t, true, egressConfig{
+		AllowCidrs: []string{"127.0.0.0/8"},
+		Ports:      []uint16{upPort},
+	})
+	backend := newHTTPServer(t, s)
+	cappedPort(t, s, backend)
+	front := newUpgradeStrippingH2Front(t, backend)
+	writeTestRelayJSON(t, front.URL+tunnelPath)
+	cfg, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), relaySelection{}, false, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The constructor lives on the node (it owns the dial), so the fixture
+	// builds the minimum node around the config exactly as runRelayNode does.
+	node := &relayNode{cfg: cfg, live: newLiveRegistry()}
+	stream, err := node.openH2Windowed(t.Context(), "000000000000000000000000000000d1", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer stream.Close()
+	_ = stream.setReadDeadline(time.Now().Add(30 * time.Second))
+
+	hello, err := encodeHello("idle-reader")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := sendFrame(stream, frameHello, hello); err != nil {
+		t.Fatal(err)
+	}
+	if typ := mustFrameType(t, stream); typ != frameHelloOK {
+		t.Fatalf("HELLO_OK: typ=%d", typ)
+	}
+	if err := sendFrame(stream, frameConnect, []byte(fmt.Sprintf("%s:%d", testTargetAlias, upPort))); err != nil {
+		t.Fatal(err)
+	}
+	if typ := mustFrameType(t, stream); typ != frameConnected {
+		t.Fatalf("CONNECTED: typ=%d", typ)
+	}
+	if err := sendFrame(stream, frameData, []byte(fmt.Sprintf(
+		"POST /turn HTTP/1.1\r\nHost: local.test\r\nContent-Length: %d\r\nConnection: close\r\n\r\n", 12<<20))); err != nil {
+		t.Fatal(err)
+	}
+
+	// More than one 8 MiB window, written from a goroutine while NO read is in
+	// flight: the writer crosses the bound and blocks on the window handoff.
+	// The reader then arrives — a reader that was between reads, not blocked —
+	// and must be enough to complete the handoff.
+	writeErr := make(chan error, 1)
+	go func() {
+		chunk := bytes.Repeat([]byte("z"), maxFramePayload)
+		for range (12 << 20) / maxFramePayload {
+			if err := sendFrame(stream, frameData, chunk); err != nil {
+				writeErr <- err
+				return
+			}
+		}
+		writeErr <- nil
+	}()
+	// Give the writer time to rotate and park, so the reader below is the one
+	// that unblocks it rather than racing it.
+	time.Sleep(500 * time.Millisecond)
+
+	// Now read: the session must still be alive and carry the upstream's
+	// answer, which rides whatever window the handoff opened.
+	_ = stream.setReadDeadline(time.Now().Add(10 * time.Second))
+	var seen bytes.Buffer
+	for {
+		msg, err := readTunnelFrame(stream)
+		if err != nil {
+			t.Fatalf("reading the rotated session: %v", err)
+		}
+		typ, _, payload, err := decodeFrame(msg)
+		if err != nil {
+			t.Fatalf("decode: %v", err)
+		}
+		if typ != frameData {
+			continue
+		}
+		seen.Write(payload)
+		if strings.Contains(seen.String(), "idle-reader-ok") {
+			if err := <-writeErr; err != nil {
+				t.Fatalf("uplink: %v", err)
+			}
+			return
+		}
+	}
+}
+
+// mustFrameType reads one frame and returns its type, failing on any error.
+func mustFrameType(t *testing.T, s tunnelStream) byte {
+	t.Helper()
+	msg, err := readTunnelFrame(s)
+	if err != nil {
+		t.Fatalf("read frame: %v", err)
+	}
+	typ, _, _, err := decodeFrame(msg)
+	if err != nil {
+		t.Fatalf("decode frame: %v", err)
+	}
+	return typ
+}

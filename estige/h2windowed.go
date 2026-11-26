@@ -250,13 +250,25 @@ type h2WindowedStream struct {
 	sessionCtx context.Context
 	cancel     context.CancelFunc
 
-	mu   sync.Mutex
-	cond *sync.Cond
-	seq  uint64
-	body *io.PipeWriter // nil while no window is open
-	resp io.ReadCloser
-	sent int64 // bytes already in the current window's body
-	err  error
+	mu sync.Mutex
+	// openMu serializes window opening: the FIRST window comes from the
+	// constructor and every later one from whichever goroutine needs it —
+	// the reader when its read ends, the writer when a record would cross the
+	// window bound. Whoever loses the race finds the window already open,
+	// so no goroutine ever waits for the other to finish a read it may not be
+	// inside (the rotation deadlock this replaces parked both).
+	openMu sync.Mutex
+	// windowEnded is closed when the CURRENT window's response has ended, so
+	// the exit's handler for it has returned. The carrier admits one window
+	// at a time (the exit refuses a span that arrives while another is in
+	// flight), so the writer's rotation waits for this before opening the
+	// next one — and the reader, which observes the end, closes it.
+	windowEnded chan struct{}
+	seq         uint64
+	body        *io.PipeWriter // nil while no window is open
+	resp        io.ReadCloser
+	sent        int64 // bytes already in the current window's body
+	err         error
 
 	closed    chan struct{}
 	closeOnce sync.Once
@@ -275,18 +287,18 @@ func (c *relayNode) openH2Windowed(dialCtx context.Context, id string, skipVerif
 	tr := c.h2Transport(&u, skipVerify)
 	sessionCtx, cancel := context.WithCancel(context.WithoutCancel(dialCtx))
 	w := &h2WindowedStream{
-		url:        u.String(),
-		local:      tls.Certificate{Certificate: [][]byte{c.cfg.selfDER}, PrivateKey: c.cfg.store.Private},
-		peers:      c.cfg.peerCerts,
-		cfg:        &c.cfg,
-		id:         id,
-		bound:      h2WindowedBytes,
-		tr:         tr,
-		sessionCtx: sessionCtx,
-		cancel:     cancel,
-		closed:     make(chan struct{}),
+		url:         u.String(),
+		local:       tls.Certificate{Certificate: [][]byte{c.cfg.selfDER}, PrivateKey: c.cfg.store.Private},
+		peers:       c.cfg.peerCerts,
+		cfg:         &c.cfg,
+		id:          id,
+		bound:       h2WindowedBytes,
+		tr:          tr,
+		sessionCtx:  sessionCtx,
+		cancel:      cancel,
+		windowEnded: make(chan struct{}),
+		closed:      make(chan struct{}),
 	}
-	w.cond = sync.NewCond(&w.mu)
 	w.client = &http.Client{Transport: tr, CheckRedirect: func(*http.Request, []*http.Request) error {
 		return http.ErrUseLastResponse
 	}}
@@ -296,6 +308,28 @@ func (c *relayNode) openH2Windowed(dialCtx context.Context, id string, skipVerif
 		return nil, err
 	}
 	return w, nil
+}
+
+// openNextWindow opens the session's next window unless one is already open.
+// Every caller that needs a window (the reader between frames, the writer
+// across a rotation) goes through here, so opening never depends on which
+// goroutine happens to be inside a read — the failure this replaces parked
+// the writer on a condition only the reader could signal, and a reader busy
+// writing to a slow local client never got there.
+func (w *h2WindowedStream) openNextWindow() error {
+	w.openMu.Lock()
+	defer w.openMu.Unlock()
+	w.mu.Lock()
+	err := w.err
+	open := w.conn != nil
+	w.mu.Unlock()
+	if err != nil {
+		return err
+	}
+	if open {
+		return nil
+	}
+	return w.openWindow()
 }
 
 // openWindow issues the next POST and parks its response for the read loop.
@@ -355,7 +389,7 @@ func (w *h2WindowedStream) openWindow() error {
 	w.body = pw
 	w.resp = resp.Body
 	w.sent = 0
-	w.cond.Broadcast()
+	w.windowEnded = make(chan struct{})
 	w.mu.Unlock()
 
 	// The handshake runs on the window itself: its ClientHello and the
@@ -381,7 +415,6 @@ func (w *h2WindowedStream) openWindow() error {
 		w.mu.Lock()
 		w.body, w.resp, w.conn = nil, nil, nil
 		w.err = err
-		w.cond.Broadcast()
 		w.mu.Unlock()
 		return err
 	}
@@ -390,17 +423,11 @@ func (w *h2WindowedStream) openWindow() error {
 	carrier.fail = func() {}
 	w.mu.Lock()
 	w.conn = conn
-	w.cond.Broadcast()
 	w.mu.Unlock()
 	return nil
 }
 
 func (w *h2WindowedStream) writeTunnelMsg(msg []byte) error {
-	// A peer that stops draining must surface as an error, not a parked
-	// write (VPN-R39) — the same bound every carrier takes.
-	timer := time.AfterFunc(tunnelKeepaliveInterval, func() { _ = w.Close() })
-	defer timer.Stop()
-
 	w.mu.Lock()
 	for {
 		if w.err != nil {
@@ -409,22 +436,45 @@ func (w *h2WindowedStream) writeTunnelMsg(msg []byte) error {
 			return err
 		}
 		if w.conn == nil {
-			w.cond.Wait()
+			w.mu.Unlock()
+			if err := w.openNextWindow(); err != nil {
+				return err
+			}
+			w.mu.Lock()
 			continue
 		}
 		// Rotate BEFORE writing: a TLS record cannot be split across two
 		// windows, and a session never spans them (d236).
 		if w.sent > 0 && w.sent+int64(tlsWireSize(len(msg))) > w.bound {
-			old := w.conn
-			_ = w.body.Close()
-			w.body, w.conn = nil, nil
+			// End this window's request body, then wait for the exit to
+			// finish it: its handler returns only after the body's EOF, and
+			// the next window's span would be refused while this one is in
+			// flight. The wait is a handoff, not a peer that stopped
+			// draining, so no write bound applies to it — the session's own
+			// read deadline and Close do.
+			if w.body != nil {
+				_ = w.body.Close()
+				w.body = nil
+			}
+			ended := w.windowEnded
 			w.mu.Unlock()
-			_ = old.Close()
+			select {
+			case <-ended:
+			case <-w.closed:
+				return errWSClosed
+			}
+			if err := w.openNextWindow(); err != nil {
+				return err
+			}
 			w.mu.Lock()
 			continue
 		}
 		conn := w.conn
 		w.mu.Unlock()
+		// The write bound: a peer that stops draining must surface as an
+		// error, not a parked write (VPN-R39).
+		bounded := time.AfterFunc(tunnelKeepaliveInterval, func() { _ = w.Close() })
+		defer bounded.Stop()
 		_, err := conn.Write(msg)
 		return err
 	}
@@ -442,9 +492,9 @@ func (w *h2WindowedStream) readTunnelMsg() ([]byte, error) {
 		body := w.resp
 		w.mu.Unlock()
 		if conn == nil {
-			w.mu.Lock()
-			w.cond.Wait()
-			w.mu.Unlock()
+			if err := w.openNextWindow(); err != nil {
+				return nil, w.readErr(err)
+			}
 			continue
 		}
 		msg, err := readFrameFromStream(conn)
@@ -462,6 +512,12 @@ func (w *h2WindowedStream) readTunnelMsg() ([]byte, error) {
 			_ = w.body.Close()
 			w.body = nil
 		}
+		// The window is over: its handler saw the body's end and returned, so
+		// the next span is admissible. A rotation waiting on this proceeds.
+		if ended := w.windowEnded; ended != nil {
+			close(ended)
+			w.windowEnded = nil
+		}
 		w.mu.Unlock()
 		_ = conn.Close()
 		if body != nil {
@@ -470,7 +526,7 @@ func (w *h2WindowedStream) readTunnelMsg() ([]byte, error) {
 		if !errors.Is(err, io.EOF) {
 			return nil, w.readErr(err)
 		}
-		if err := w.openWindow(); err != nil {
+		if err := w.openNextWindow(); err != nil {
 			return nil, err
 		}
 	}
@@ -521,7 +577,6 @@ func (w *h2WindowedStream) Close() error {
 		w.resp = nil
 		conn := w.conn
 		w.conn = nil
-		w.cond.Broadcast()
 		w.mu.Unlock()
 		if body != nil {
 			_ = body.Close()

@@ -98,3 +98,72 @@ func TestRetiredH1WindowedFailsClosed(t *testing.T) {
 		t.Fatalf("retired h1.1-post-windowed window answered %d, want the camouflage 404", resp.StatusCode)
 	}
 }
+
+// TestWindowedSessionAdmission pins the windowed carriers' session rules, which
+// the retired h1.1 suite used to cover: a window must authenticate as the key
+// that minted the session, only span 1 mints, and only the next span in
+// sequence is admitted. Every refusal is the camouflage 404 and no refusal may
+// report who else holds the trace-id.
+func TestWindowedSessionAdmission(t *testing.T) {
+	// accept lives on the server (it spawns the session's pump), so the
+	// fixture builds the minimum server around the registry.
+	server := &tunnelServer{sessions: newExchangeSessions()}
+	const (
+		alice   = "relay_alice"
+		mallory = "relay_mallory"
+		traceID = "0123456789abcdef0123456789abcdef"
+		other   = "fedcba9876543210fedcba9876543210"
+	)
+	ctx := t.Context()
+
+	t.Run("span 1 mints a session bound to its key", func(t *testing.T) {
+		session, compromised := server.accept(ctx, traceID, firstWindowSpan, &operatorKey{id: alice})
+		if session == nil || compromised != nil {
+			t.Fatalf("accept = (%v, %v), want a minted session", session, compromised)
+		}
+		t.Cleanup(func() { _ = session.Close() })
+		if session.keyID != alice {
+			t.Fatalf("session key = %q, want %q", session.keyID, alice)
+		}
+		// A continuation on the same trace-id from the same key is the session.
+		if again, _ := server.accept(ctx, traceID, firstWindowSpan, &operatorKey{id: alice}); again != session {
+			t.Fatal("a same-key continuation minted a second session")
+		}
+		// A different (individually valid) key must not drive it, and the
+		// refusal hands the session back so the caller can kill it.
+		if _, compromised := server.accept(ctx, traceID, firstWindowSpan, &operatorKey{id: mallory}); compromised != session {
+			t.Fatal("a foreign key was allowed to reach another principal's session")
+		}
+	})
+
+	t.Run("a continuation on an unknown trace-id is refused", func(t *testing.T) {
+		// Span > 1 with no state is a misrouted window, not a new session:
+		// answering "minting works" would be an oracle (VPN-R34).
+		if session, _ := server.accept(ctx, other, firstWindowSpan+1, &operatorKey{id: alice}); session != nil {
+			t.Fatal("a continuation without state minted a session")
+		}
+	})
+
+	t.Run("only the next span in sequence is admitted, one at a time", func(t *testing.T) {
+		id := "000000000000000000000000000000aa"
+		session, _ := server.accept(ctx, id, firstWindowSpan, &operatorKey{id: alice})
+		if session == nil {
+			t.Fatal("fresh session not minted")
+		}
+		t.Cleanup(func() { _ = session.Close() })
+		if !session.beginWindow(firstWindowSpan) {
+			t.Fatal("the minting window was refused")
+		}
+		if session.beginWindow(firstWindowSpan + 1) {
+			t.Fatal("a second window was admitted while one was in flight")
+		}
+		session.endWindow()
+		if session.beginWindow(firstWindowSpan + 2) {
+			t.Fatal("a desynced span was admitted")
+		}
+		if !session.beginWindow(firstWindowSpan + 1) {
+			t.Fatal("the next span was refused")
+		}
+		session.endWindow()
+	})
+}

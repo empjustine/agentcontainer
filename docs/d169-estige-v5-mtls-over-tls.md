@@ -1,7 +1,7 @@
 ---
 id: d169
 type: module-design
-status: draft
+status: active
 title: "d169 — estige v5: inner mTLS over the tunnel — channel security for an untrusted carrier"
 parent: estige
 depends-on: [d077, d104, d108, d131, d132]
