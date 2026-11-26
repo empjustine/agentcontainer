@@ -196,8 +196,10 @@ and `estige/run.go`:
   `IMAGE_TAG`.
 - **How env reaches the container**: `--env-file $ESTIGE_ENV_FILE` when set,
   otherwise explicit `-e` names for the non-secret knobs (`PORT`,
-  `PORT_CLOUDFLARE`, `VPN_CLIENT_LABEL`, `XDG_DATA_HOME`). No credential has an
-  env spelling to forward.
+  `PORT_CLOUDFLARE`, `VPN_CLIENT_LABEL`). No credential has an env spelling to
+  forward, and `XDG_DATA_HOME` is never forwarded: the image pins it to the
+  directory the store is mounted at, so the host's value would point the
+  container at a path it cannot see.
 
 ## Amendment map
 

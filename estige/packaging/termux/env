@@ -8,8 +8,10 @@
 # The host identity, the admitted relays and the egress policy are files there:
 #
 #   estige keygen -principal <name>          # mint this host's key + certificate
-#   cat ~/.local/share/estige/relay.json     # paste the {name, public} row
-#   estige key check                         # load both role files like boot does
+#   estige public -f ~/.local/share/estige/prv/<name>.der
+#                                            # print the {name, public} row the
+#                                            # peer's relay.json must pin
+#   estige key check                         # load the role files like boot does
 #
 # Without a store the exit node refuses to start — that is the kill switch
 # (docs/d084/d236): there is no env fallback and older env spellings fail

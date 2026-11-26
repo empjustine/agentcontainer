@@ -59,7 +59,9 @@ rationale stays in [DESIGN.md](DESIGN.md).
 Packages are the supported deployment. `./node-run.sh estige/build.mjs estige-packages`
 writes both artifacts to `estige/packaging/out/`; the binary is self-contained
 (no node, jq, or infisical inside the package). The env file belongs to the
-operator and to the service manager: the binary reads no file.
+operator and to the service manager and carries no configuration; everything a
+node needs is its **store** under `$XDG_DATA_HOME/estige`, provisioned once with
+`estige keygen` (see "Configuration" below).
 
 **Termux (aarch64, exit node, runit via termux-services)**
 

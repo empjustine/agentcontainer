@@ -80,6 +80,12 @@ func main() {
 	// Both backends take the same explicit `build` subcommand; podman's
 	// `image build` alias is optional and its argument order differs from
 	// docker's, so one spelling keeps the two from drifting.
+	//
+	// --pull is load-bearing, not hygiene: the omitted-flag default is the
+	// "missing" policy, so a locally-cached debian:trixie-slim is reused even
+	// after upstream republishes it — the moving tag this image resolves FROM
+	// must be refreshed explicitly (bare --pull = always). FORCE=1 in the
+	// node builder does not reach here; a fresh base is this flag alone.
 	args := []string{"build", "--pull", "-t", tag, "-f", "Containerfile", "."}
 	cmd := exec.Command(tool, args...)
 	cmd.Dir = buildDir

@@ -2,24 +2,20 @@
  * @fileoverview build.mjs — build estige for THIS host (docs/d041; d083 made
  * the build entry per-unit, docs/d113 folded the root builder away).
  *
- * Three targets, and which one registers is a host fact, not a flag:
+ * Two targets, and which one registers is a host fact, not a flag:
  *
- *   - Container image: owned by `go run build.go` after `go build .` (d236).
- *     The Go command packages the host binary into a Debian slim image; this
- *     builder no longer registers an image target.
- *   - No container backend: `estige-native` — the host binary direct runs
- *     use; on Termux the android/arm64 binary through lib/go-build.mjs's
- *     preset (GOOS=android — DNS resolver; see that module's header). Needs a
- *     WORKING go toolchain.
- *   - Every host with a working go toolchain: `estige-packages` — the pure-Go
- *     Termux .deb and Oracle Linux .rpm into packaging/out/. It cross-compiles
- *     the two payload binaries (android/arm64 and linux/amd64), so it does not
- *     depend on this host's OS; no packaging tool is invoked.
+ *   - `estige-native` — the host binary direct runs use, and the input to the
+ *     container image; on Termux the android/arm64 binary through
+ *     lib/go-build.mjs's preset (GOOS=android — DNS resolver; see that
+ *     module's header). Needs a WORKING go toolchain.
+ *   - `estige-packages` — the pure-Go Termux .deb and Oracle Linux .rpm into
+ *     packaging/out/. It cross-compiles the two payload binaries
+ *     (android/arm64 and linux/amd64), so it does not depend on this host's
+ *     OS; no packaging tool is invoked.
  *
- * --pull is load-bearing, not hygiene: the omitted-flag default is the
- * "missing" policy, so a locally-cached golang:1.27 tag is reused even after
- * upstream republishes it — the moving tag the build resolves FROM must be
- * refreshed explicitly (bare --pull = always).
+ * The container image is not a target here: `go build .` then `go run build.go`
+ * packages the binary this builder produces (d236), which is also where the
+ * `--pull` reasoning for the base image lives.
  *
  * Idempotence comes from the CACHES, not from skip checks (docs/d041): a
  * container build on unchanged inputs is a layer-cache hit — seconds, not
@@ -28,15 +24,16 @@
  * up source changes without a flag; only WHICH targets register varies per
  * host. The former skip-if-present checks are gone on purpose: they keyed on
  * tag/file PRESENCE, so editing main.go after a build left the stale
- * image/binary in place unless the operator knew FORCE=1 — a silent-staleness
- * trap of exactly the kind the repo's fail-loudly contract forbids. FORCE=1
- * now means cache-bust: --no-cache for the image build, `-a` for go.
+ * binary in place unless the operator knew FORCE=1 — a silent-staleness trap
+ * of exactly the kind the repo's fail-loudly contract forbids. FORCE=1 now
+ * means cache-bust: `-a` for go (and the Go image command takes its own
+ * --no-cache).
  *
- * argv selects target names (`./build.sh image`); no names builds every
- * registered target. An unknown name is a loud exit 94 with the catalog; a
- * requested-but-gated name logs the gate and is left out.
+ * argv selects target names (`./build.sh estige-native`); no names builds
+ * every registered target. An unknown name is a loud exit 94 with the catalog;
+ * a requested-but-gated name logs the gate and is left out.
  *
- * Env overrides: FORCE · IMAGE_TAG · GOFLAGS.
+ * Env overrides: FORCE · GOFLAGS.
  */
 
 import { spawn } from "node:child_process";
@@ -303,10 +300,10 @@ function logCommandLine(cmd, stream, target, line) {
 /**
  * Run one command to completion, capturing stdout+stderr LINE BY LINE and
  * re-emitting each as a structured log record (docs/d045): child processes
- * are upstreams (buildah, go) that cannot be made to honor d045 themselves,
- * so the wrapping layer owns the line-boundary. stdio:"inherit" would turn
- * the parallel coding-agent/estige image builds into byte-wise interleaved
- * garbage when several units build at once.
+ * are upstreams (go, and the image backend when the Go command runs it) that
+ * cannot be made to honor d045 themselves, so the wrapping layer owns the
+ * line-boundary. stdio:"inherit" would turn two units building at once into
+ * byte-wise interleaved garbage.
  * @param {string} executable
  * @param {string[]} args
  * @param {{ cwd?: string, env?: Record<string, string>, name?: string, cmd: string }} opts
@@ -400,7 +397,7 @@ function noteGated(...names) {
 			// Always builds: go's build cache is content-addressed, so an
 			// unchanged tree is a near-instant cache hit and a changed main.go is
 			// picked up without a flag — the former file-exists skip had the same
-			// stale-presence trap as the image skip (module header).
+			// stale-presence trap the module header describes.
 			const flags = [...(force ? ["-a"] : []), ...commonBuildFlags(termux)];
 			const env = termux ? androidBuildEnv(termux) : hostBuildEnv();
 			return await run("go", ["build", ...flags, "-o", out, "."], {
@@ -530,9 +527,8 @@ if (termux) {
 // provisioning (d041), not an artifact, and it is the shared Termux
 // environment the on-device build runs under, so it runs first regardless of
 // selection; packaged artifacts themselves need neither node nor jq.
-// Serialized throughout:
-// Termux cannot parallelize ~1 GB go builds, and on a container host the image
-// is the only registered target anyway.
+// Serialized throughout: Termux cannot parallelize ~1 GB go builds, and the
+// two registered targets both drive the same go build cache.
 const requested = process.argv.slice(2);
 const knownNames = new Set([...gatedOff, ...targets.map((t) => t.name)]);
 const unknown = requested.filter((name) => !knownNames.has(name));
