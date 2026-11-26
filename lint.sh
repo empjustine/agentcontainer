@@ -163,6 +163,15 @@ log_info "biome lint (gating — rule set in biome.jsonc; pinned by package-lock
 # the 1.95.0 pin, d243: a warning-level finding exits 0 under it and 1 under
 # --deny-warnings). The earlier flag is gone rather than kept beside the real
 # one, so no reader has to work out which of the two is live.
+#
+# The type-aware rules resolve each `pi-*` package's imports through THAT
+# folder's node_modules (d107: one lock per folder, one pnpm store), so the leg
+# acquires them first. Without the install those imports are `any` and the
+# checker reports typescript/no-redundant-type-constituents on every type that
+# reaches them — measured on a fresh checkout, absent once installed — which
+# would make this gate's verdict a fact about whether `./check-types.sh` had run
+# before, not about the code.
+pnpm_tools_ensure "$repo_root"
 log_info "oxlint (gating — type-aware JS/TS lint)"
 _oxlint_pinned="$repo_root/node_modules/.bin/oxlint"
 if [ -x "$_oxlint_pinned" ] && "$_oxlint_pinned" --version >/dev/null 2>&1; then

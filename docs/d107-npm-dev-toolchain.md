@@ -57,8 +57,12 @@ The facts that force the shape:
   `npm ci --ignore-scripts --include=dev`: the gate executes no package
   lifecycle code, and a `NODE_ENV=production` environment cannot silently
   omit the tools.
-- `lint.sh` and `check-types.sh` call the local `node_modules/.bin` tools.
-  They no longer provision biome, knip, or tsc through mise.
+- `lint.sh` and `check-types.sh` call the local `node_modules/.bin` tools, and
+  both ensure the installs before using them: the stamped npm tree is every
+  gate's precondition, and `lint.sh` also acquires the `pi-*` type trees before
+  its type-aware oxlint leg (d243) — those rules read them, so a missing tree is
+  an acquisition, not a finding. Neither script provisions biome, knip, or tsc
+  through mise.
 - Shellcheck, jq, and shfmt are not npm packages. They keep the existing
   delivery split: `mise exec <tool>@latest` on hosts that have mise, or the
   host package manager on Termux/mise-less hosts (`pkg install shellcheck

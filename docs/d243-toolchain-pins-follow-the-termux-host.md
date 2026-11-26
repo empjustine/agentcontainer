@@ -96,11 +96,15 @@ whole record is about.
   The window is a real supply-chain control (dotfiles DR-005, not this repo's
   decision), so the fix was to move the default to 1 day in the dotfiles tree and
   commit it there, not to bypass it for one command.
-- **Two oxlint warnings disappeared once the types were installed.** The
+- **Two oxlint warnings exposed a gate-order defect, fixed here.** The
   `typescript/no-redundant-type-constituents` findings on the `pi-*` packages
   were the imported `ProviderConfig` resolving to `any` because `pnpm install`
-  had not run in the workspace, not code defects. They are absent after
-  `./check-types.sh`, which is also the pnpm 12.23.0 frozen-install check.
+  had not run, not code defects — absent once installed. With `--deny-warnings`
+  gating for the first time, that made `./lint.sh` fail on a fresh checkout while
+  passing on one where `./check-types.sh` had run, so the verdict was a fact
+  about the checkout's history rather than the code. `lint.sh` now calls
+  `pnpm_tools_ensure` before the type-aware oxlint leg: the leg acquires the
+  types its rules read instead of reporting their absence.
 - **Termux's own version remains whatever `pkg` ships.** The pin cannot bind it;
   what this record buys is that the next divergence is one measurable fact with
   a date instead of a silent difference in what the two hosts call canonical.
@@ -115,6 +119,10 @@ whole record is about.
   --deny-warnings` → exit 1 (the negative control that `-D warning` failed).
 - `./check-types.sh` → clean, with all eight `pi-*` folders installed by
   `pnpm 12.23.0 --frozen-lockfile`.
+- Fresh-checkout gate order: `rm -rf pi-*/node_modules` then `./lint.sh` →
+  exit 0, installing eight `pi-*` type trees first and reporting no
+  `no-redundant-type-constituents` findings (the same command exited 1 before
+  the `pnpm_tools_ensure` call was added).
 - Full `./lint.sh` run recorded in the change; the Maven leg runs 3.10.2.
 
 ## Alternatives rejected
