@@ -10,7 +10,8 @@ node_modules/
 
 # pnpm's content-addressable store (docs/d107): the pi extensions each carry
 # their own pnpm-lock.yaml (a folder is a copy unit), and this ONE store holds
-# the bytes all six hardlink — deleting a folder's node_modules costs nothing.
+# the bytes every tree hardlinks — deleting one folder's node_modules costs
+# nothing, and the count follows the provider family rather than a number here.
 .pnpm-store/
 
 # Python bytecode — the llm-local-inference tools run through `uv run`, which

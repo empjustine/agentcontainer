@@ -59,7 +59,8 @@ dev_tool_pin() {
 	oxfmt) printf '%s\n' '0.79.0' ;;
 	# The pi extensions' type source (@earendil-works/pi-coding-agent) is a real
 	# devDependency; pnpm is what installs it WITHOUT a copy per folder — its
-	# content-addressed store hardlinks one unpacked copy into six node_modules.
+	# content-addressed store hardlinks one unpacked copy into each folder's
+	# node_modules — the count follows the provider family, so it is not written here.
 	pnpm) printf '%s\n' '12.23.0' ;;
 	# Pinned rather than floated because each prints the verdict ./lint.sh gates
 	# on, and a version that moves between runs is a gate whose meaning moves
