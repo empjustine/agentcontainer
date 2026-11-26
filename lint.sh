@@ -112,7 +112,7 @@ dev_tool_run shfmt find . -path ./node_modules -prune -o \
 # table (docs/d139; the repo commits no mise.toml — docs/d051/d082); Termux has
 # no mise and takes the host package's oxfmt, so a bump there re-runs the
 # one-shot reformat — check, do not assume: 0.75.0 → 0.79.0 reformatted nothing
-# (1455 files already correct, measured 2026-11-26).
+# (every tracked file already correct, measured 2026-11-26).
 OXFMT_GLOB='**/*.md'
 log_info "oxfmt markdown (gating — canonical markdown, pinned)"
 dev_tool_run oxfmt oxfmt --check "$OXFMT_GLOB" ||

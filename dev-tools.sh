@@ -13,9 +13,10 @@
 # (the Go suite in test.sh, golangci-lint's child `go list` in lint.sh) at ONE
 # version, and a second copy of a version string is drift waiting to happen.
 # docs/d139 supersedes d137's "the pin lives in lint.sh" placement. The pin
-# STYLE is unchanged: a tool whose output IS the gate's meaning is pinned
-# (golangci-lint, oxfmt — d137); a utility whose only contract is "a plausibly
-# current shellcheck/jq" floats at @latest (d107).
+# STYLE is unchanged in kind and narrowed in scope by docs/d241: a tool whose
+# output IS the gate's meaning is pinned (golangci-lint, oxfmt, shellcheck,
+# shfmt, ruff, uv, ty — d137), and only `jq`, which joins output rather than
+# printing a verdict, floats at @latest.
 #
 # WHY there is no committed mise.toml, restated here because this file is now
 # where that question lands: a root mise.toml re-pins bare `node`/`go` for

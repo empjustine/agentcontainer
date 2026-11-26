@@ -75,8 +75,9 @@ whole record is about.
 
 ## Consequences
 
-- **The oxfmt bump cost no reformat.** 0.79.0 reports all 1455 tracked markdown
-  files already canonical, so the version moved without a tree-wide diff.
+- **The oxfmt bump cost no reformat.** 0.79.0 reports every tracked markdown
+  file already canonical — 1457 with these two records included, 1455 when the
+  bump was measured — so the version moved without a tree-wide diff.
 - **The oxlint bump exposed a gate that was not gating.** `oxlint . -D warning`
   reads as a severity floor and is not one: `-D`/`--deny` names a _rule_, so the
   command asked for a rule called "warning" and gated nothing (a warning-level
@@ -107,7 +108,7 @@ whole record is about.
 
 - `mise ls-remote` ceilings measured 2026-11-26: oxfmt 0.79.0, uv 0.13.9,
   ty 0.0.108, pnpm 12.23.0, maven 3.10.2, shellcheck 0.11.0, shfmt 3.14.1.
-- `oxfmt@0.79.0 --check '**/*.md'` → all 1455 files canonical (0.75.0: same).
+- `oxfmt@0.79.0 --check '**/*.md'` → all 1457 files canonical (0.75.0: same).
 - `npm ci` against the re-locked tree, then `biome lint . --error-on-warnings`
   and `oxlint . --deny-warnings` → clean; `oxlint probe -W <rule>
   --deny-warnings` → exit 1 (the negative control that `-D warning` failed).
