@@ -68,12 +68,13 @@ var errWSClosed = errors.New("websocket closed")
 // from different goroutines — VPN-R18's backpressure model means at most one
 // frame is ever in flight per direction, but two directions do write).
 type wsConn struct {
-	conn    net.Conn
-	br      *bufio.Reader
-	bw      *bufio.Writer
-	client  bool   // client frames are masked (RFC 6455 §5.3)
-	id      string // session correlation id (docs/d106)
-	writeMu sync.Mutex
+	conn       net.Conn
+	br         *bufio.Reader
+	bw         *bufio.Writer
+	client     bool        // client frames are masked (RFC 6455 §5.3)
+	id         string      // session correlation id (docs/d106)
+	respHeader http.Header // the 101's admission proof, read by the relay
+	writeMu    sync.Mutex
 }
 
 func (c *wsConn) sessionID() string { return c.id }
@@ -86,7 +87,7 @@ func (c *wsConn) sessionID() string { return c.id }
 // 101 response to write on the hijacked connection. It is separated from the
 // hijack/write so auth can run BEFORE any upgrade work (VPN-R12/R39: an
 // unauthenticated upgrade never reaches a 101).
-func wsAccept(r *http.Request) (response []byte, err error) {
+func wsAccept(r *http.Request, hdr http.Header) (response []byte, err error) {
 	if !headerHasToken(r.Header, "Upgrade", "websocket") || !headerHasToken(r.Header, "Connection", "Upgrade") {
 		return nil, fmt.Errorf("%w: missing Upgrade/Connection headers", ErrProtocol)
 	}
@@ -105,7 +106,13 @@ func wsAccept(r *http.Request) (response []byte, err error) {
 	b.WriteString("Connection: Upgrade\r\n")
 	b.WriteString("Sec-WebSocket-Accept: ")
 	b.WriteString(wsAcceptKey(key))
-	b.WriteString("\r\n\r\n")
+	b.WriteString("\r\n")
+	for name, values := range hdr {
+		for _, v := range values {
+			fmt.Fprintf(&b, "%s: %s\r\n", name, v)
+		}
+	}
+	b.WriteString("\r\n")
 	return []byte(b.String()), nil
 }
 
@@ -138,7 +145,7 @@ func headerHasToken(h http.Header, name, token string) bool {
 // rides this handshake, protected by the tunnel leg's TLS). dial is the
 // relay node's TCP leg — nil/direct, or through the chain proxy when one
 // is configured (docs/d094); TLS stays end-to-end above a chain.
-func wsDial(ctx context.Context, tunnelURL *url.URL, extraHeaders http.Header, dial dialFunc, skipVerify bool) (*wsConn, error) {
+func wsDial(dialCtx context.Context, tunnelURL *url.URL, extraHeaders http.Header, dial dialFunc, skipVerify bool) (*wsConn, error) {
 	var raw net.Conn
 	var err error
 	if dial == nil {
@@ -159,9 +166,9 @@ func wsDial(ctx context.Context, tunnelURL *url.URL, extraHeaders http.Header, d
 			// System roots, ServerName from the URL host, no override knobs:
 			// the Funnel `*.ts.net` certificate must verify as-is (VPN-R28),
 			// and nothing in this module may weaken verification (VPN-R55).
-			raw, err = dialTLS(ctx, dial, addr, tunnelURL.Hostname(), nil, skipVerify)
+			raw, err = dialTLS(dialCtx, dial, addr, tunnelURL.Hostname(), nil, skipVerify)
 		} else {
-			raw, err = dial(ctx, "tcp", addr)
+			raw, err = dial(dialCtx, "tcp", addr)
 		}
 	default:
 		return nil, fmt.Errorf("tunnel URL scheme must be ws or wss, got %q", tunnelURL.Scheme)
@@ -170,12 +177,12 @@ func wsDial(ctx context.Context, tunnelURL *url.URL, extraHeaders http.Header, d
 		return nil, err
 	}
 
-	// The handshake never outlives a bounded window even when ctx carries
+	// The handshake never outlives a bounded window even when dialCtx carries
 	// no deadline of its own (VPN-R39): a black-holed endpoint ends in an
 	// error, not a goroutine parked on a read. The context may only make
 	// the window shorter, never extend it.
 	handshakeDeadline := time.Now().Add(tunnelHandshakeTimeout)
-	if d, ok := ctx.Deadline(); ok && d.Before(handshakeDeadline) {
+	if d, ok := dialCtx.Deadline(); ok && d.Before(handshakeDeadline) {
 		handshakeDeadline = d
 	}
 	_ = raw.SetDeadline(handshakeDeadline)
@@ -232,7 +239,10 @@ func wsDial(ctx context.Context, tunnelURL *url.URL, extraHeaders http.Header, d
 	_ = raw.SetDeadline(time.Time{})
 	// The caller puts the correlation id in extraHeaders; reading it back
 	// here keeps the id on the one structure every carrier shape returns.
-	return &wsConn{conn: raw, br: br, bw: bufio.NewWriter(raw), client: true, id: extraHeaders.Get(sessionIDHeader)}, nil
+	return &wsConn{
+		conn: raw, br: br, bw: bufio.NewWriter(raw), client: true,
+		id: extraHeaders.Get(sessionIDHeader), respHeader: http.Header(respHeader),
+	}, nil
 }
 
 // readLine reads one CRLF-terminated line without the terminator (the

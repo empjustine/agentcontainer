@@ -1,6 +1,6 @@
-# estige relay node. Disjoint from estige.service by credential (this role
-# reads VPN_OPERATOR_TOKEN, never VPN_OPERATOR_KEYS) and by listener (loopback
-# CONNECT/SOCKS5 only; it binds no funnel port). docs/d090.
+# estige relay node. Disjoint from estige.service by store file (this role
+# reads relay.json; the exit reads exit.json) and by listener (loopback
+# CONNECT/SOCKS5 only; it binds no funnel port). d090/d236.
 [Unit]
 Description=estige relay node (loopback CONNECT/SOCKS5 proxy)
 After=network-online.target
@@ -11,6 +11,9 @@ Type=simple
 User=estige
 Group=estige
 EnvironmentFile=-/etc/estige/estige-relay.env
+Environment=XDG_DATA_HOME=/var/lib/estige/.local/share
+StateDirectory=estige
+StateDirectoryMode=0700
 ExecStart=/usr/bin/estige -mode relay -proxy-listen 127.0.0.1:3128 -socks-listen 127.0.0.1:1080
 Restart=on-failure
 RestartSec=2s

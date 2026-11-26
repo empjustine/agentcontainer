@@ -115,7 +115,7 @@ func TestEAuthRejects(t *testing.T) {
 			}
 		})
 	}
-	if _, err := parseEAuthHeader(nil); !errors.Is(err, errEAuthCardinality) {
+	if _, err := parseEAuthHeader(nil); !errors.Is(err, errAuthCardinality) {
 		t.Fatalf("missing header: %v", err)
 	}
 }

@@ -1,5 +1,6 @@
-# estige exit node. The role's credential is VPN_OPERATOR_KEYS in the env
-# file; the bind is PORT (docs/d110), so this unit has no -port flag.
+# estige exit node. The identity, admitted relays and egress policy are the
+# store under XDG_DATA_HOME (d236); the bind is PORT (docs/d110), so this unit
+# has no -port flag.
 [Unit]
 Description=estige exit node (SSL-VPN tunnel server)
 After=network-online.target
@@ -10,6 +11,9 @@ Type=simple
 User=estige
 Group=estige
 EnvironmentFile=-/etc/estige/estige.env
+Environment=XDG_DATA_HOME=/var/lib/estige/.local/share
+StateDirectory=estige
+StateDirectoryMode=0700
 ExecStart=/usr/bin/estige -mode exit
 Restart=on-failure
 RestartSec=2s

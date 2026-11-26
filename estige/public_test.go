@@ -1,11 +1,12 @@
 package main
 
-// public_test.go — estige public derives the same entry keygen prints, and
-// refuses a private key whose file name is not a principal (docs/d132).
+// public_test.go — estige public reprints the certificate row keygen wrote,
+// and refuses a key whose name or certificate cannot be trusted (d236).
 
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -21,6 +22,38 @@ func TestPublicDerivesEntryFromKeyFile(t *testing.T) {
 	}
 	if derived != entry {
 		t.Fatalf("derived entry = %+v, want %+v", derived, entry)
+	}
+	if _, _, err := parseEPubHeader([]string{derived.Public}); err != nil {
+		t.Fatalf("derived public is not a pinned certificate: %v", err)
+	}
+}
+
+func TestPublicRefusesMissingOrWrongCertificate(t *testing.T) {
+	dir := t.TempDir()
+	privPath, _, _, err := keygen(dir, keygenTestPrincipal, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	certPath := strings.TrimSuffix(privPath, keygenPrivSuffix) + keygenCertSuffix
+	if err := os.Remove(certPath); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := publicEntryFromKeyFile(privPath); err == nil {
+		t.Fatal("public accepted a key without its certificate")
+	}
+	otherPath, _, _, err := keygen(t.TempDir(), keygenTestPrincipal, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	otherDER, err := os.ReadFile(strings.TrimSuffix(otherPath, keygenPrivSuffix) + keygenCertSuffix)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(certPath, otherDER, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := publicEntryFromKeyFile(privPath); err == nil {
+		t.Fatal("public accepted a certificate from another key")
 	}
 }
 

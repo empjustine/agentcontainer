@@ -35,7 +35,7 @@ import (
 // dial is the relay node's TCP leg for this probe — direct, or through the
 // chain proxy when one is configured (docs/d094); the TLS handshake is
 // end-to-end either way.
-func alpnNegotiate(ctx context.Context, u *url.URL, offer []string, dial dialFunc, skipVerify bool) (string, error) {
+func alpnNegotiate(probeCtx context.Context, u *url.URL, offer []string, dial dialFunc, skipVerify bool) (string, error) {
 	if u.Scheme != schemeWSS {
 		return "", nil
 	}
@@ -43,12 +43,12 @@ func alpnNegotiate(ctx context.Context, u *url.URL, offer []string, dial dialFun
 	if !hasPort(addr) {
 		addr = net.JoinHostPort(addr, "443")
 	}
-	if _, ok := ctx.Deadline(); !ok {
+	if _, ok := probeCtx.Deadline(); !ok {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, tunnelHandshakeTimeout)
+		probeCtx, cancel = context.WithTimeout(probeCtx, tunnelHandshakeTimeout)
 		defer cancel()
 	}
-	conn, err := dialTLS(ctx, dial, addr, u.Hostname(), offer, skipVerify)
+	conn, err := dialTLS(probeCtx, dial, addr, u.Hostname(), offer, skipVerify)
 	if err != nil {
 		return "", err
 	}
@@ -89,7 +89,7 @@ var errUnboundedRefused = errors.New("the edge refused h2-post-unbounded")
 // node's. A 200 on h2 is this carrier's session-open (the 101's
 // counterpart); a 404 is the camouflage refusal (VPN-R34) and confirms
 // nothing about whether the path exists.
-func (c *relayNode) openH2Unbounded(ctx context.Context, id string, skipVerify bool) (tunnelStream, error) {
+func (c *relayNode) openH2Unbounded(dialCtx context.Context, id string, skipVerify bool) (tunnelStream, error) {
 	u := *c.cfg.tunnelURL
 	if u.Scheme != schemeWSS {
 		return nil, fmt.Errorf("h2-post-unbounded needs a wss:// tunnel URL, got %q", u.Scheme)
@@ -99,14 +99,14 @@ func (c *relayNode) openH2Unbounded(ctx context.Context, id string, skipVerify b
 	tr := c.h2Transport(&u, skipVerify)
 
 	pr, pw := io.Pipe()
-	// The request must outlive ctx: the session's life is the CONNECT's,
-	// not the dial's. WithoutCancel keeps ctx's values, drops its cancel.
-	req, err := http.NewRequestWithContext(context.WithoutCancel(ctx), http.MethodPost, u.String(), pr)
+	// The request must outlive dialCtx: the session's life is the CONNECT's,
+	// not the dial's. WithoutCancel keeps dialCtx's values, drops its cancel.
+	req, err := http.NewRequestWithContext(context.WithoutCancel(dialCtx), http.MethodPost, u.String(), pr)
 	if err != nil {
 		_ = pw.Close()
 		return nil, err
 	}
-	hdr, err := c.cfg.channelHeaders()
+	hdr, nonce, err := c.cfg.channelHeaders()
 	if err != nil {
 		_ = pw.CloseWithError(err)
 		return nil, err
@@ -137,6 +137,12 @@ func (c *relayNode) openH2Unbounded(ctx context.Context, id string, skipVerify b
 			return nil, errUnboundedRefused
 		}
 		return nil, fmt.Errorf("h2-post-unbounded: status %d", resp.StatusCode)
+	}
+	if err := c.cfg.verifyExitResponse(resp.Header, nonce); err != nil {
+		_ = resp.Body.Close()
+		_ = pw.Close()
+		tr.CloseIdleConnections()
+		return nil, err
 	}
 	if resp.ProtoMajor != 2 {
 		// Defensive demotion: the probe said h2, the session didn't get it.

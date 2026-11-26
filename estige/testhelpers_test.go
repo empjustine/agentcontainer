@@ -14,6 +14,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"io"
@@ -119,13 +120,12 @@ func (r staticHostLookup) LookupIPAddr(_ context.Context, host string) ([]net.IP
 	return []net.IPAddr{{IP: net.ParseIP(ip)}}, nil
 }
 
-const (
-	testV5Principal = "default"
-	testAliceToken  = "alice-token-0123456789"
-	testBobToken    = "bob-token-0123456789"
-)
+const testV5Principal = "default"
 
-var testV5CertDER []byte
+var (
+	testV5CertDER   []byte
+	testV5StoreRoot string
+)
 
 // installTestV5Store gives both roles one pinned identity. The relay and exit
 // share it in-process; production runs each role in its own home.
@@ -135,6 +135,7 @@ func installTestV5Store() error {
 		return err
 	}
 	root := filepath.Join(base, "estige")
+	testV5StoreRoot = root
 	if _, _, _, err := keygen(root, testV5Principal, false); err != nil {
 		return err
 	}
@@ -142,16 +143,70 @@ func installTestV5Store() error {
 	if err != nil {
 		return err
 	}
-	entry := fmt.Sprintf(`"name":%q,"public":%q`, testV5Principal, encodeEPub(testV5CertDER))
-	relayFile := fmt.Sprintf(`{"exit":[{"endpoint":%q,%s}]}`, "wss://example.invalid/vpn", entry)
-	exitFile := fmt.Sprintf(`{"relays":[{%s}]}`, entry)
-	if err := os.WriteFile(filepath.Join(root, "relay.json"), []byte(relayFile), 0o600); err != nil {
-		return err
-	}
-	if err := os.WriteFile(filepath.Join(root, "exit.json"), []byte(exitFile), 0o600); err != nil {
+	if err := writeTestRoleFiles("wss://example.invalid/vpn", nil); err != nil {
 		return err
 	}
 	return os.Setenv("XDG_DATA_HOME", base)
+}
+
+// writeTestRoleFiles rewrites the two role files for the suite identity: the
+// endpoint a relay dials and the egress an exit enforces. Every construction
+// path reads exactly what production reads (d236) — no test shortcut config.
+func writeTestRoleFiles(endpoint string, egress *egressConfig) error {
+	entry := fmt.Sprintf(`"name":%q,"public":%q`, testV5Principal, encodeEPub(testV5CertDER))
+	relayFile := fmt.Sprintf(`{"endpoint":%q,"exit":[{%s}]}`, endpoint, entry)
+	exitFile := fmt.Sprintf(`{"relays":[{%s}]%s}`, entry, egressBlock(egress))
+	if err := os.WriteFile(filepath.Join(testV5StoreRoot, "relay.json"), []byte(relayFile), 0o600); err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(testV5StoreRoot, "exit.json"), []byte(exitFile), 0o600)
+}
+
+// egressBlock renders the store's egress member, omitting it for a zero
+// config — absent is what "no opt-ins, use the defaults" means in the grammar.
+func egressBlock(egress *egressConfig) string {
+	if egress == nil || (len(egress.AllowCidrs) == 0 && len(egress.Ports) == 0 && !egress.AllowIPLiterals) {
+		return ""
+	}
+	raw, err := json.Marshal(egress)
+	if err != nil {
+		return ""
+	}
+	return fmt.Sprintf(`,"egress":%s`, raw)
+}
+
+// writeTestRoleFile writes one role file for one test and restores what the
+// suite store held when that test first touched it. Without the restore the
+// store is process-global state that outlives a test — unlike the t.Setenv
+// this replaced — and `go test -shuffle=on` fails on whatever a previous test
+// left behind.
+func writeTestRoleFile(t *testing.T, name, body string) {
+	t.Helper()
+	path := filepath.Join(testV5StoreRoot, name)
+	if previous, err := os.ReadFile(path); err == nil {
+		t.Cleanup(func() { _ = os.WriteFile(path, previous, 0o600) })
+	} else {
+		t.Cleanup(func() { _ = os.Remove(path) })
+	}
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// writeTestRelayJSON sets the endpoint a relay dials for one test.
+func writeTestRelayJSON(t *testing.T, endpoint string) {
+	t.Helper()
+	entry := fmt.Sprintf(`"name":%q,"public":%q`, testV5Principal, encodeEPub(testV5CertDER))
+	writeTestRoleFile(t, "relay.json", fmt.Sprintf(`{"endpoint":%q,"exit":[{%s}]}`, endpoint, entry))
+}
+
+// writeTestExitJSON sets the exit's admitted relay row(s) and its egress for
+// one test. A nil egress leaves exit.json without a policy, which means the
+// requirement's defaults (VPN-R35..R38).
+func writeTestExitJSON(t *testing.T, egress *egressConfig) {
+	t.Helper()
+	entry := fmt.Sprintf(`"name":%q,"public":%q`, testV5Principal, encodeEPub(testV5CertDER))
+	writeTestRoleFile(t, "exit.json", fmt.Sprintf(`{"relays":[{%s}]%s}`, entry, egressBlock(egress)))
 }
 
 // TestMain installs the suite TLS root before any test runs — SSL_CERT_FILE
@@ -321,11 +376,11 @@ func mustTunnelURL(t *testing.T, proxy *httptest.Server) *url.URL {
 
 func testV5Headers(t *testing.T) http.Header {
 	t.Helper()
-	store, err := loadRelayStore(storeRoot())
+	store, err := loadRelayStore(mustStoreRoot(t))
 	if err != nil {
 		t.Fatal(err)
 	}
-	hdr, err := channelRequestHeaders(store.Private, store.Principal, store.Exits[0].Name, store.SelfDER)
+	hdr, _, err := channelRequestHeaders(store.Private, store.Principal, store.Exits[0].Name, store.SelfDER)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -337,30 +392,137 @@ func applyTestV5Headers(t *testing.T, hdr http.Header) {
 	maps.Copy(hdr, testV5Headers(t))
 }
 
-func dialTunnelForTest(t *testing.T, u *url.URL, token string) (tunnelStream, error) {
+// mustStoreRoot is storeRoot for fixtures: a test that cannot resolve the
+// suite store has no business continuing.
+func mustStoreRoot(t *testing.T) string {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	hdr := make(http.Header)
-	if token != "" {
-		applyTestV5Headers(t, hdr)
+	root, err := storeRoot()
+	if err != nil {
+		t.Fatalf("store root: %v", err)
 	}
-	ws, err := wsDial(ctx, u, hdr, nil, false)
+	return root
+}
+
+// assertNoAdmissionMaterial fails when a log dump carries anything an
+// admitted exchange proves with: a proof header name, the pinned certificate
+// in its wire spelling, or a proof envelope. Assertions grep the SHIPPED
+// names — an earlier guard matched "e-auth", which neither header contains,
+// so it passed vacuously (d131/d236).
+func assertNoAdmissionMaterial(t *testing.T, dumped string) {
+	t.Helper()
+	if found := admissionMaterialIn(dumped); found != "" {
+		t.Fatalf("admission material %q leaked into the log:\n%s", found, dumped)
+	}
+}
+
+// admissionMaterialIn returns the first admission spelling a log dump carries,
+// or "" — a finder rather than an assertion so its own test can prove each
+// needle is really searched for.
+func admissionMaterialIn(dumped string) string {
+	// Header names are case-insensitive; base64url is not, so the proof and
+	// certificate needles are matched against the dump as it stands.
+	lower := strings.ToLower(dumped)
+	for _, needle := range []string{
+		strings.ToLower(eRelayAuthHeader),
+		strings.ToLower(eExitAuthHeader),
+		strings.ToLower(ePubHeader),
+	} {
+		if strings.Contains(lower, needle) {
+			return needle
+		}
+	}
+	for _, needle := range []string{
+		// A logged envelope would carry the token and minter name.
+		authToken + "." + testV5Principal,
+		// The certificate material itself, as the store spells it.
+		encodeEPub(testV5CertDER),
+	} {
+		if strings.Contains(dumped, needle) {
+			return needle
+		}
+	}
+	return ""
+}
+
+func dialTunnelForTest(t *testing.T, u *url.URL) (tunnelStream, error) {
+	t.Helper()
+	hdr := make(http.Header)
+	applyTestV5Headers(t, hdr)
+	return dialTunnelWithHeaders(t, u, hdr)
+}
+
+// dialTunnelWithHeaders is the low-level driver: it dials the 101 with the
+// caller's exact admission headers and completes the inner session, so a test
+// can replay one proof or present a foreign certificate.
+func dialTunnelWithHeaders(t *testing.T, u *url.URL, hdr http.Header) (tunnelStream, error) {
+	t.Helper()
+	dialCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	ws, err := wsDial(dialCtx, u, hdr, nil, false)
 	if err != nil {
 		return nil, err
 	}
-	store, err := loadRelayStore(storeRoot())
+	store, err := loadRelayStore(mustStoreRoot(t))
 	if err != nil {
 		_ = ws.Close()
 		return nil, err
 	}
 	local := tls.Certificate{Certificate: [][]byte{store.SelfDER}, PrivateKey: store.Private}
-	conn, err := clientChannelHandshake(ctx, ws, local, store.Exits[0].Cert)
+	conn, err := clientChannelHandshake(dialCtx, ws, local, []*x509.Certificate{store.Exits[0].Cert})
 	if err != nil {
 		_ = ws.Close()
 		return nil, err
 	}
 	return newTLSTunnelStream(conn, ws), nil
+}
+
+// tunnelTestBackend wires the exit node through enableTunnel with an egress
+// rule that reaches the loopback upstream, and returns the handler itself for
+// fixtures that need to be the only edge.
+func tunnelTestBackend(t *testing.T, upstream *httptest.Server) *server {
+	t.Helper()
+	upPort := portOf(t, upstream.Listener.Addr().String())
+	return newTunnelServer(t, true, egressConfig{
+		AllowCidrs: []string{"127.0.0.0/8"},
+		Ports:      []uint16{upPort},
+	})
+}
+
+// tunnelTestServer is the same handler behind a plain h1.1 server: the shape
+// a gateway in front of the exit delivers.
+func tunnelTestServer(t *testing.T, upstream *httptest.Server) *httptest.Server {
+	t.Helper()
+	return newHTTPServer(t, tunnelTestBackend(t, upstream))
+}
+
+// wireRelayNode starts the relay role exactly as -mode relay wires it
+// (production construction path — d072's drift lesson) and returns the
+// loopback http address plus a shutdown func.
+func wireRelayNode(t *testing.T, tunnelURL string) (string, func()) {
+	t.Helper()
+	writeTestRelayJSON(t, tunnelURL)
+	t.Setenv(envClientLabel, "e2e")
+	httpAddr := freeLoopbackAddr(t)
+	socksAddr := freeLoopbackAddr(t)
+	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, relaySelection{}, false, false)
+	if err != nil {
+		t.Fatalf("relayConfigFromEnv: %v", err)
+	}
+	dialCtx, cancel := context.WithCancel(context.Background())
+	relayDone := make(chan error, 1)
+	go func() { relayDone <- runRelayNode(dialCtx, cfg) }()
+	waitForHealth(t, "http://"+httpAddr+healthPath)
+	return httpAddr, func() {
+		cancel()
+		select {
+		case err := <-relayDone:
+			if err != nil {
+				t.Fatalf("runRelayNode: %v", err)
+			}
+		case <-time.After(10 * time.Second):
+			t.Fatal("relay node did not stop on context cancellation")
+		}
+	}
 }
 
 // reserveLoopbackAddr picks a concrete port by binding :0 and releasing

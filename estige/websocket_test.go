@@ -44,7 +44,7 @@ func TestWSAcceptValidatesUpgrade(t *testing.T) {
 			},
 		}
 	}
-	if _, err := wsAccept(valid()); err != nil {
+	if _, err := wsAccept(valid(), nil); err != nil {
 		t.Fatalf("valid upgrade rejected: %v", err)
 	}
 
@@ -58,7 +58,7 @@ func TestWSAcceptValidatesUpgrade(t *testing.T) {
 	for name, mutate := range mutations {
 		r := valid()
 		mutate(r)
-		if _, err := wsAccept(r); !errors.Is(err, ErrProtocol) {
+		if _, err := wsAccept(r, nil); !errors.Is(err, ErrProtocol) {
 			t.Errorf("%s: expected ErrProtocol, got %v", name, err)
 		}
 	}
@@ -414,9 +414,9 @@ func TestWSDialHandshake(t *testing.T) {
 
 	u, _ := url.Parse("ws://" + ln.Addr().String() + "/secretcap/vpn")
 	hdr := http.Header{"Authorization": {"Bearer tok-1234"}}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	dialCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	client, err := wsDial(ctx, u, hdr, nil, false)
+	client, err := wsDial(dialCtx, u, hdr, nil, false)
 	if err != nil {
 		t.Fatalf("wsDial: %v", err)
 	}
@@ -460,9 +460,9 @@ func TestWSDialRejectsNon101(t *testing.T) {
 	}()
 
 	u, _ := url.Parse("ws://" + ln.Addr().String() + "/secretcap/vpn")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	dialCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if _, err := wsDial(ctx, u, nil, nil, false); err == nil {
+	if _, err := wsDial(dialCtx, u, nil, nil, false); err == nil {
 		t.Fatal("expected dial failure against a 404")
 	} else if !strings.Contains(err.Error(), "404") {
 		t.Fatalf("error should carry the real status, got %v", err)

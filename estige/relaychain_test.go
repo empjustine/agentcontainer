@@ -159,11 +159,10 @@ func TestTunnelTLSConfigIsTLS13Only(t *testing.T) {
 // surfaces through the ONE config path, before any bind.
 func TestRelayChainBadConfigRefusesStartup(t *testing.T) {
 	clearChainEnv(t)
-	armTestTunnelEnv(t)
-	t.Setenv(envTunnelURL, "wss://example.invalid:8443/vpn")
+	writeTestRelayJSON(t, "wss://example.invalid:8443/vpn")
 	t.Setenv("SOCKS_SERVER", "gate:1080")
 	t.Setenv("SOCKS_VERSION", "4a")
-	if _, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), false, false); err == nil || !strings.Contains(err.Error(), "SOCKS_VERSION") {
+	if _, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), relaySelection{}, false, false); err == nil || !strings.Contains(err.Error(), "SOCKS_VERSION") {
 		t.Fatalf("err=%v, want the SOCKS_VERSION refusal from relayConfigFromEnv", err)
 	}
 }
@@ -264,7 +263,7 @@ func newSOCKS5ChainProxy(t *testing.T, requireAuth bool) (string, func() []strin
 }
 
 // chainFetch opens one local CONNECT and pulls one response through the
-// relay — the h1PostWindowedFetch shape with its own body string.
+// relay, with its own body string.
 func chainFetch(t *testing.T, httpAddr, targetHost string, upPort uint16) {
 	t.Helper()
 	conn := rawDial(t, httpAddr)
@@ -301,7 +300,7 @@ func newChainUpstream(t *testing.T) *httptest.Server {
 func TestRelayChainHTTPProxyCarriesTunnel(t *testing.T) {
 	upstream := newChainUpstream(t)
 	upPort := portOf(t, upstream.Listener.Addr().String())
-	backend := h1PostWindowedTestServer(t, upstream)
+	backend := tunnelTestServer(t, upstream)
 
 	proxyURL, hops := newCONNECTChainProxy(t)
 	clearChainEnv(t)
@@ -349,41 +348,6 @@ func TestRelayChainHTTPProxyCarriesTunnel(t *testing.T) {
 	}
 }
 
-// TestRelayChainSOCKS5ProxyCarriesTunnelModeE: the D-refused → E demotion
-// rides a SOCKS5 chain (RFC 1928 path, name crossing unresolved), proving
-// the chain is the ROUTE — the ladder ranks transports above it unchanged
-// (docs/d093 over docs/d094).
-func TestRelayChainSOCKS5ProxyCarriesTunnelModeE(t *testing.T) {
-	upstream := newChainUpstream(t)
-	upPort := portOf(t, upstream.Listener.Addr().String())
-	backend := h1PostWindowedTestServer(t, upstream)
-	gateway := newHostileGateway(t, backend)
-
-	socksAddr, targets := newSOCKS5ChainProxy(t, false)
-	clearChainEnv(t)
-	t.Setenv("SOCKS_SERVER", socksAddr)
-
-	front := newTLSFront(t, gateway, false)
-	httpAddr, stop := wireRelayNode(t, front.URL+tunnelPath)
-	defer stop()
-	logBuf := captureLog(t)
-
-	chainFetch(t, httpAddr, testTargetAlias, upPort)
-
-	waitForLog(t, logBuf, "transport=h1.1-post-windowed")
-	recorded := targets()
-	tunnelAddr := front.Listener.Addr().String()
-	found := false
-	for _, target := range recorded {
-		if target == tunnelAddr {
-			found = true
-		}
-	}
-	if !found {
-		t.Fatalf("socks chain targets=%v, want the tunnel endpoint %q", recorded, tunnelAddr)
-	}
-}
-
 // TestALPNProbeRidesHTTPChain: h2-post-unbounded's leg — the disposable ALPN probe —
 // also dials through the chain, TLS end-to-end above it.
 func TestALPNProbeRidesHTTPChain(t *testing.T) {
@@ -400,9 +364,9 @@ func TestALPNProbeRidesHTTPChain(t *testing.T) {
 		t.Fatal(err)
 	}
 	u.Scheme = "wss"
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	dialCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	proto, err := alpnNegotiate(ctx, u, []string{"h2", "http/1.1"}, chain.dial, false)
+	proto, err := alpnNegotiate(dialCtx, u, []string{"h2", "http/1.1"}, chain.dial, false)
 	if err != nil {
 		t.Fatalf("alpnNegotiate over chain: %v", err)
 	}
@@ -426,9 +390,9 @@ func TestSOCKS5ChainCredentials(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	dialCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	conn, err := withCreds.dial(ctx, "tcp", target)
+	conn, err := withCreds.dial(dialCtx, "tcp", target)
 	if err != nil {
 		t.Fatalf("socks5 chain with credentials: %v", err)
 	}
@@ -450,7 +414,7 @@ func TestSOCKS5ChainCredentials(t *testing.T) {
 	}
 	// The proxy refuses the no-auth offer outright (0xFF); the client must
 	// fail closed rather than downgrade — the proxy's choice is its own.
-	if _, err := withoutCreds.dial(ctx, "tcp", target); err == nil || !strings.Contains(err.Error(), "no acceptable auth method") {
+	if _, err := withoutCreds.dial(dialCtx, "tcp", target); err == nil || !strings.Contains(err.Error(), "no acceptable auth method") {
 		t.Fatalf("err=%v, want the auth-method refusal", err)
 	}
 }
@@ -561,4 +525,32 @@ func socks5FixtureHandshake(conn net.Conn, requireAuth bool, record func(string)
 		return nil, false
 	}
 	return up, true
+}
+
+// TestRelayChainSOCKS5ProxyCarriesTunnel: the SOCKS5 chain carries a real
+// tunnel, not only a dial. The websocket rung rides it here (an h1.1 TLS
+// front, so the ALPN probe reports "h2 not offered" and the session dials as
+// an upgrade), which is the shape every carrier's tunnelDial shares
+// (docs/d094).
+func TestRelayChainSOCKS5ProxyCarriesTunnel(t *testing.T) {
+	upstream := newChainUpstream(t)
+	upPort := portOf(t, upstream.Listener.Addr().String())
+	backend := tunnelTestServer(t, upstream)
+
+	socksAddr, targets := newSOCKS5ChainProxy(t, false)
+	clearChainEnv(t)
+	t.Setenv("SOCKS_SERVER", socksAddr)
+
+	front := newTLSFront(t, backend, false)
+	httpAddr, stop := wireRelayNode(t, front.URL+tunnelPath)
+	defer stop()
+	logBuf := captureLog(t)
+
+	chainFetch(t, httpAddr, testTargetAlias, upPort)
+
+	waitForLog(t, logBuf, "transport=websocket")
+	tunnelAddr := front.Listener.Addr().String()
+	if recorded := targets(); len(recorded) == 0 || recorded[0] != tunnelAddr {
+		t.Fatalf("socks chain targets=%v, want the tunnel endpoint %q", recorded, tunnelAddr)
+	}
 }

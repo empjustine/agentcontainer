@@ -14,13 +14,14 @@ itself is `main.go` + `deb.go` + `rpm.go` here.
 | `termux/postinst`              | prints the enable step; never starts an unedited credential                                            |
 | `ol/estige.env`                | exit-node env template, `/etc/estige/estige.env` mode 0600                                             |
 | `ol/estige-relay.env`          | relay env template, `/etc/estige/estige-relay.env` mode 0600                                           |
-| `ol/estige.service`            | exit node unit: `VPN_OPERATOR_KEYS`, bind `PORT` (docs/d110)                                           |
-| `ol/estige-relay.service`      | relay unit: `VPN_OPERATOR_TOKEN`, loopback listeners only                                              |
+| `ol/estige.service`            | exit node unit: store in `StateDirectory=estige`, bind `PORT` (docs/d110/d236)                         |
+| `ol/estige-relay.service`      | relay unit: same store, loopback listeners only                                                        |
 | `ol/prein.sh` … `ol/postun.sh` | RPM scriptlets (`%pre`, `%post`, `%preun`, `%postun`)                                                  |
 
 The two units are separate files, not an `estige@.service` template: the roles
-carry disjoint credentials and disjoint listeners (docs/d090), so a template
-would need per-instance credential indirection for no gain.
+read disjoint store files (`relay.json` vs `exit.json`) and carry disjoint
+listeners (docs/d090), so a template would need per-instance store
+indirection for no gain.
 
 Both env files are conffiles (`%config(noreplace)` in the RPM; `conffiles` in
 the deb), so an upgrade never overwrites operator edits. Neither writer signs

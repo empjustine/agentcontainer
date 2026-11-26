@@ -31,7 +31,8 @@ for that step, recorded before context is lost.
    nothing but a modern Go.
 2. `go test ./...` — hermetic: tests are `httptest`-based, no
    `os.Getenv`, no network, no tailnet, no `testing.Short` skips.
-3. Node 24 for the folder's own builder — the only remaining node leg.
+3. Node 24 for the folder's own builder — the packaging leg only; the
+   image moved to Go (d236).
    Generation itself is Go since d102 and needs no node; the old
    `tests/canonical-json.test.mjs` guard moved to `coding-agent/tests/`
    with docs/d108, and this unit has no shell test left. The build entry resolves
@@ -40,10 +41,9 @@ for that step, recorded before context is lost.
    mise.toml would re-pin bare `node` for anyone cd-ing into the repo). CI
    must use `jdx/mise-action` + `mise install node@24`, not rely on a
    checked-in config.
-4. `./node-run.sh estige/build.mjs estige-image` — **the
-   shim, never an inline `podman build -f`** (d041/d083/d087 law: one
-   build implementation; inlining `imageBuildArgs`/`--pull`/tag
-   logic into the workflow would create a second one to drift).
+4. `go build . && go run build.go` — the Go image command (d236) packages
+   the host-built binary; no inline `podman build -f` (one build
+   implementation: inlining tag/context logic would create a second).
 5. `./node-run.sh estige/build.mjs estige-packages` — the packaging leg. It
    cross-compiles android/arm64 and linux/amd64 and runs the stdlib
    `.deb`/`.rpm` writer, so the runner needs no `dpkg-deb` or `rpmbuild`.
@@ -94,8 +94,9 @@ both cases, no NDK, no extra toolchain:
   it needs no NDK. `estige-packages` cross-compiles this payload on
   any host; `build.mjs` selects the native preset ONLY via on-device
   detection (`$PREFIX` under `com.termux`), and registers
-  `estige-native` only when NO container tool exists — a
-  docker-equipped runner `noteGated`s it. The workflow invokes the
+  `estige-native` on every host with a go toolchain — the container
+  image is built FROM that binary by `go run build.go` (d236), so a
+  container-capable runner needs it too. The workflow invokes the
   target NAME, never its flags (one-build law, d041/d083/d087).
 - **arm32v5 (EN7562CT, MikroTik e50ug)** — `GOOS=linux GOARCH=arm
   GOARM=5 CGO_ENABLED=0` compiles the same trivial way. No preset or
@@ -111,7 +112,7 @@ both cases, no NDK, no extra toolchain:
   `-version` smoke stays a device-side check today. The full tunnel
   suite (`go test ./...`) stays a same-arch affair.
 - Artifacts land via `actions/upload-artifact`; the OCI image build
-  stays amd64 (the Containerfile has no cross TARGETPLATFORM wiring).
+  stays amd64 (the Go builder has no cross TARGETPLATFORM wiring).
 
 ## Runner friction (must-check on the first real run)
 
@@ -121,14 +122,10 @@ both cases, no NDK, no extra toolchain:
 - **Buildx lands in the daemon store** under the runner's default
   docker driver (`docker buildx build` without `--load`); verify with
   `docker image ls` on the first run before adding any push step.
-- **`cloudReachable()` gate** (models.dev HEAD canary via
-  the folder's own `lib/host-capabilities.mjs`) registers the image target only when
-  outbound cloud answers: a models.dev outage makes the target
-  selection empty → exit 91, red build. No env override exists —
-  accepting that flake, or adding a CI-scoped override, is its own
-  decision (d087-era capability law: gates key on network facts).
-- **`estige-native`'s "target not registered" warning** on
-  a container-capable host is expected and harmless (noteGated).
+- The image leg is a Go command (d236): `go build .` must produce `./estige`
+  before `go run build.go`, and a container backend (podman or docker) must be
+  on PATH. Nothing is gated on outbound cloud reachability, and the Node
+  builder registers no image target.
 
 ## Optional follow-ups (not required for a green build)
 

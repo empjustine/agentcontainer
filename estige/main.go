@@ -3,12 +3,17 @@
 // One binary, two network positions (docs/d088): the EXIT node terminates
 // tunnels at the edge and opens egress under the policy the operator reviews;
 // the RELAY node dials in and serves localhost CONNECT/SOCKS5 proxies to
-// unmodified clients. Every input arrives through the env chain
-// (docs/d078/d084/d085/d090 + docs/d108's tree-shake): there is no config
-// file, so nothing about a deployment can live outside the environment the
-// service manager or operator hands it. A packaged runit/systemd unit sources
-// its env file and execs this binary; `proxy-env` is the only verb left for
-// the operator's shell (docs/d095).
+// unmodified clients.
+//
+// A deployment IS a store (d236): `$XDG_DATA_HOME/estige` holds the host key
+// and its certificate, the pairing rows and the egress policy, and it is the
+// only place any of that can live. The environment carries nothing but
+// non-secret runtime knobs (the bind, the relay's label) and argv carries the
+// postures an operator must be able to see in the process's own command line.
+// A node with no store — or one that does not parse — refuses to boot rather
+// than binding a port that answers 404 to everything (docs/d084's kill switch).
+// The operator's own verbs are `keygen`, `public` and `key check` for that
+// store, plus `proxy-env` for the shell chain step (docs/d095).
 //
 // The v2 host-allowlist reverse proxy (docs/d047, legacy allowlist relay) is gone
 // (docs/d108): a TLS-terminating edge sees plaintext provider keys, and no
@@ -33,27 +38,18 @@ import (
 	"time"
 )
 
-// Tunnel environment surface (carriers; docs/d073 §6.3/§7): credentials
-// arrive ONLY through this path — the ./environment.sh env chain. A file
-// would be a second, unkeyed copy of a credential (VPN-R32), and d108 removed
-// the last file the binary read rather than keep a policy-shaped exception.
-// The roles are disjoint (docs/d090): VPN_OPERATOR_KEYS is the EXIT node's
-// principal set, a JSON object {"<id>": "<token>"} (docs/d078 §2);
-// VPN_OPERATOR_TOKEN is the RELAY node's bearer and is read nowhere else.
-// VPN_TUNNEL_URL is the relay node's endpoint — http(s):// or ws(s)://, in
-// the URL's honest wire form, normalized once in relayConfigFromEnv — and
-// VPN_CLIENT_LABEL its optional identity; they identify, they do not
-// authenticate. The capability PATH is none of this env's business
-// (docs/d085): it is the Funnel mount's, and the edge strips it before a
-// request can reach us.
+// Tunnel environment surface (carriers; docs/d073 §6.3/§7): NOTHING SECRET
+// arrives this way any more. The store under $XDG_DATA_HOME/estige holds the
+// host identity, the pairing and the egress policy (d236/d132), so a file
+// holding a credential is not a second copy of one and the env chain carries
+// only non-secret runtime knobs. What is left: the bind (PORT/PORT_CLOUDFLARE,
+// docs/d110/d222) and the relay's optional log label. The capability PATH is
+// none of this env's business (docs/d085): it is the Funnel mount's, and the
+// edge strips it before a request can reach us.
 const (
-	envTunnelURL     = "VPN_TUNNEL_URL"
-	envOperatorToken = "VPN_OPERATOR_TOKEN"
-	envOperatorKeys  = "VPN_OPERATOR_KEYS"
-	envClientLabel   = "VPN_CLIENT_LABEL"
-	// envTunnelEgress is the exit node's policy half (VPN-R38): parsed by
-	// egressFromEnv, unset meaning the requirement's defaults.
-	envTunnelEgress = "VPN_TUNNEL_EGRESS"
+	// envClientLabel is the relay node's optional identity in the HELLO and
+	// its own log records. It identifies, it does not authenticate.
+	envClientLabel = "VPN_CLIENT_LABEL"
 	// envCloudflarePort is the exit node's second bind: the port whose
 	// connector (cloudflared) fronts an edge that caps one request body
 	// (docs/d222). Requests arriving on it have h2-post-unbounded refused at
@@ -62,15 +58,26 @@ const (
 	envCloudflarePort = "PORT_CLOUDFLARE"
 )
 
-// operatorCredentialInEnv reports whether the env chain carries an operator
-// credential — the thing that arms the tunnel (docs/d084 as amended by d085:
-// the credential IS the capability). The file-side veto/assert is gone with
-// the file (docs/d108 slice 5): wanting the tunnel off is spelled by not
-// loading the credential, which is one spelling instead of three.
-// Either variable marks the operator's INTENT to arm; which variable each
-// node actually READS is enforced at enable time (docs/d090): the exit node
-// refuses TOKEN-only with the migration hint, the relay node refuses in
-// relayConfig.validate().
+// exitRoleRefusal reports the first relay-only argv line an exit-node start
+// carries. Every one of these switches is about DIALING a peer, and the exit
+// node dials none of its own: accepting the flag silently would hide a relay
+// argv line copied onto the exit host, so each is refused by name (docs/d171's
+// ledger applied to d236's selectors).
+func exitRoleRefusal(insecureExit, legacyIPRelay bool, forwards int, exitName, endpoint string) error {
+	switch {
+	case insecureExit:
+		return errors.New("-insecure-exit belongs to the relay role; the exit node dials no tunnel")
+	case legacyIPRelay:
+		return errors.New("-legacy-ip-relay belongs to the relay role; the exit node has no local doors (d163)")
+	case forwards > 0:
+		return errors.New("-L belongs to the relay role; the exit node opens no local listeners")
+	case exitName != "":
+		return errors.New("-exit belongs to the relay role; the exit node is the peer, it dials none")
+	case endpoint != "":
+		return errors.New("-endpoint belongs to the relay role; the exit node binds, it dials no endpoint")
+	}
+	return nil
+}
 
 // portFromEnv resolves the exit node's single-port bind (docs/d110): env
 // PORT, unset → 8080 on all interfaces. The convention's whole value is that
@@ -416,10 +423,11 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 var version = "dev"
 
 func main() {
-	// Three subcommands remain, each print-and-exit: `proxy-env` prints the
+	// Four subcommands remain, each print-and-exit: `proxy-env` prints the
 	// loopback proxy spelling for the operator's shell (docs/d095); `keygen`
-	// mints the host identity key material and `public` derives a peer-ready
-	// config entry from it (docs/d169, the store d132 describes). `generate`
+	// mints the host identity key material, `public` derives a peer-ready
+	// config entry and `key check` validates the role stores (d104/d132/d236).
+	// `generate`
 	// went with the allowlist it emitted (docs/d108) and `smoke-test` went
 	// with the reverse-proxy behaviour it checked; the installed service units
 	// own everything else. Role selection stays `-mode`.
@@ -433,6 +441,10 @@ func main() {
 	}
 	if len(os.Args) > 1 && os.Args[1] == "public" {
 		runPublic(os.Args[2:])
+		return
+	}
+	if len(os.Args) > 2 && os.Args[1] == "key" && os.Args[2] == "check" {
+		runKeyCheck(os.Args[3:])
 		return
 	}
 
@@ -453,6 +465,12 @@ func main() {
 	// ws:// URL. It is argv, not env, because a posture this load-bearing
 	// must be visible in the process's own command line (d163's ledger).
 	insecureExit := flag.Bool("insecure-exit", false, "relay role: allow the two degraded tunnel postures — skip TLS verification and accept a cleartext ws:// URL (docs/d171)")
+	// Which peer this relay dials (d236). The store's first exit row is the
+	// implicit default — row order is special nowhere else — and argv can name
+	// the exit (its security principal) or re-route the endpoint. Neither
+	// grants trust: the pinned certificate of the selected exit decides.
+	exitName := flag.String("exit", "", "relay role: which relay.json exit row to dial (default: the first row; d236)")
+	endpointOverride := flag.String("endpoint", "", "relay role: dial this endpoint instead of relay.json's (the pinned certificate still decides trust; d236)")
 	// ssh-style local forwarding (docs/d144): each -L is its own loopback
 	// listener and its own tunnel per accepted connection.
 	var forwardArgs forwardList
@@ -485,7 +503,8 @@ func main() {
 		if *statusListen != "" {
 			fatalLine("[vpn-relay] -status-listen belongs to the exit role; the relay's surface is its loopback /healthz (VPN-R27)")
 		}
-		relayCfg, err := relayConfigFromEnv(*proxyListen, *socksListen, *legacyIPRelay, *insecureExit)
+		relayCfg, err := relayConfigFromEnv(*proxyListen, *socksListen,
+			relaySelection{Exit: *exitName, Endpoint: *endpointOverride}, *legacyIPRelay, *insecureExit)
 		if err != nil {
 			if errors.Is(err, errSelfChained) {
 				logLine(sevError, "[vpn-relay] %v", err)
@@ -497,8 +516,8 @@ func main() {
 		if err != nil {
 			fatalLine("[vpn-relay] %v", err)
 		}
-		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-		runErr := runRelayNode(ctx, relayCfg)
+		runCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		runErr := runRelayNode(runCtx, relayCfg)
 		// stop() runs explicitly, not from a defer: fatalLine below exits
 		// without unwinding defers (gocritic's exitAfterDefer), and a pending
 		// defer is exactly what that rule forbids.
@@ -511,21 +530,16 @@ func main() {
 	if *mode != "exit" {
 		fatalLine("[estige] unknown -mode %q (want exit or relay)", *mode)
 	}
-	if *insecureExit {
-		// The exit node dials nothing: a switch about the dial cannot mean
-		// anything here, and silently ignoring it would hide a misplaced
-		// argv line (docs/d171).
-		fatalLine("[estige] -insecure-exit belongs to the relay role; the exit node dials no tunnel")
-	}
-	if len(forwardArgs) > 0 {
-		fatalLine("[estige] -L belongs to the relay role; the exit node opens no local listeners")
+	if err := exitRoleRefusal(*insecureExit, *legacyIPRelay, len(forwardArgs), *exitName, *endpointOverride); err != nil {
+		fatalLine("[estige] %v", err)
 	}
 
-	// There is no config FILE (docs/d108's tree-shake): every fact the exit
-	// node needs arrives on the env chain — the credential set that arms the
-	// tunnel (docs/d084/d085), the egress opt-ins (VPN-R38), and the bind
-	// (env PORT, docs/d110). d104's role store becomes the home for the
-	// policy half; until it lands, the env is the whole surface.
+	// The exit node is configured from its store, not the environment
+	// (d236): $XDG_DATA_HOME/estige holds the host key and certificate, the
+	// admitted relays and the egress policy, and a missing or unparseable
+	// store is the arming fact's absence — it refuses at boot (docs/d084's
+	// kill-switch law). The env contributes only the bind (PORT, docs/d110)
+	// and the exit's optional argv postures.
 	bind := portFromEnv()
 	cfPort := cloudflarePortFromEnv()
 	if cfPort != "" && bind == ":"+cfPort {
@@ -538,13 +552,9 @@ func main() {
 	}
 
 	s := &server{cloudflarePort: cfPort}
-	egress, err := egressFromEnv()
-	if err != nil {
-		fatalLine("[estige] %v", err)
-	}
 	// The store is the arming fact: a missing or broken store refuses at
 	// boot rather than binding a port that answers 404 to everything.
-	if err := s.enableTunnel(egress); err != nil {
+	if err := s.enableTunnel(); err != nil {
 		fatalLine("[estige] tunnel: %v", err)
 	}
 
@@ -579,7 +589,7 @@ func main() {
 		logLine(sevInfo, "[estige] listening on :%s (cloudflare edge: h2-post-unbounded refused; windowed carriers only)", cfPort)
 	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	runCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	if *statusListen != "" {
@@ -597,7 +607,7 @@ func main() {
 	select {
 	case err := <-serveErr:
 		fatalLine("[estige] %v", err)
-	case <-ctx.Done():
+	case <-runCtx.Done():
 		// One signal drains rather than kills (docs/d171's rotation
 		// primitive): stop accepting, let live sessions finish, then close
 		// what is left at the deadline. Without this a restart — which is

@@ -1,7 +1,7 @@
 ---
 id: d169
 type: module-design
-status: draft
+status: active
 title: "d169 — estige v5: inner mTLS over the tunnel — channel security for an untrusted carrier"
 parent: estige
 depends-on: [d077, d104, d108, d131, d132]
@@ -27,14 +27,18 @@ plus a `net.Conn` adapter, and verification is the library's own: no
 
 ## Status
 
-Draft — a proposal, not in force and not accepted; nothing in the tree has to
-obey it yet, and d104/d131/d132/d133 remain the credential design on record.
-The implementation would land as a separately sequenced change, the way
-d104's own implementation order sequences its steps. An earlier revision of
-this draft kept the clock out of the channel with `InsecureSkipVerify` and a
-hand-written verifier; the decision below replaces that with the library's
-own verification against a bounded validity window, and the rejected shape is
-recorded under Alternatives rejected.
+Implemented in `estige/` as deployment generation v5, through the settled
+details in d236 and the carrier correction in d241. The channel runs on the
+three carriers v5 serves (`h2-post-unbounded`, `websocket`,
+`h2-post-windowed`); `h1.1-post-windowed` could not complete a handshake
+behind an upgrade-stripping gateway and retired rather than serve unprotected
+bytes (d241). "On every rung of the ladder (modes C, D and E)" below therefore
+means the rungs that exist: C, the WebSocket and D.
+
+An earlier revision of this draft kept the clock out of the channel with
+`InsecureSkipVerify` and a hand-written verifier; the decision below replaces
+that with the library's own verification against a bounded validity window,
+and the rejected shape is recorded under Alternatives rejected.
 
 An earlier revision also minted an ephemeral leaf under a CA root. That layer
 is removed: process compromise exposes the store key at boot in either shape,
@@ -42,7 +46,7 @@ so the leaf moved the bytes without moving the boundary. d211 records the
 front-door alternative that drops this whole channel layer.
 
 d236 closes the audit of this proposal. It supplies the settled certificate
-shape, the `e-auth` and `E-Pub` admission pair, the log-only `seen_hosts` event
+shape, the `e-relay-auth`/`e-exit-auth` and `e-pub` admission pair, the log-only `seen_hosts` event
 and the per-window channel rule. Where this draft disagrees with d236, d236
 binds.
 
@@ -123,9 +127,10 @@ Closing the gap needs six things the proofs do not provide:
    vocabulary, never a distinct signal that confirms a tunnel.
 6. **A stated position on padding** — out of scope, recorded as such.
 
-DoS answers to none of them: an unauthenticated flood still costs one verify
-(d104's arithmetic), and rate limiting stays hygiene rather than a security
-control.
+DoS answers to none of them: an unauthenticated flood still costs one
+certificate verify, a pinned peer pays that plus the proof's verify, and rate
+limiting stays hygiene rather than a security control (d131's cost section
+carries the arithmetic).
 
 ## Decision
 
@@ -192,7 +197,8 @@ in the peer's pool and the certificate sent in the handshake.
   provenance of both numbers). The backdate absorbs a day of drift; the
   forward bound sits far past any realistic skew.
 - **Trust is pinning, not public chains.** Each side holds the peer's
-  certificate in the role helper (d132's `relay.json` and `exit.json` rows).
+  certificate(s) in the role helper (d132's `relay.json` and `exit.json` rows;
+  a staged rotation is two rows under one name, and both are pinned).
   System roots never enter the inner path, and no second key is generated at
   boot.
 - **Rotation is staged, not expired.** A principal switches keys through
@@ -227,11 +233,18 @@ points, and an auditor reads the library's code rather than this record's.
 
 The trust wiring is the standard one:
 
-- **Client** — `RootCAs` is a pool holding only the pinned peer certificate
-  (system roots are never added), `ServerName` is the peer's principal name,
-  and `Certificates` carries the local self-signed certificate.
-- **Server** — `ClientCAs` is the same single-certificate pool and `ClientAuth`
-  is `RequireAndVerifyClientCert`.
+- **Client** — `RootCAs` is a pool holding the certificates pinned for the one
+  exit being dialed (system roots are never added), `ServerName` is the fixed
+  wire name, and `Certificates` carries the local self-signed certificate.
+- **Server** — `ClientCAs` is a pool holding the certificate(s) pinned for each
+  admitted relay, and `ClientAuth` is `RequireAndVerifyClientCert`.
+
+Either pool is a **set of pins, not one certificate**, because d133's staged
+rotation keeps two rows under one principal name and either must verify.
+Collapsing a pool to the first row reintroduces an outage that survives
+admission and dies in the handshake (the bug `TestStagedExitRotationPinsEveryRow`
+pins).
+
 - **No callback and no skip** — `InsecureSkipVerify` does not appear and
   `VerifyPeerCertificate` is not set; chain, key usage, extended key usage
   and the `NotBefore`/`NotAfter` window are the library's checks against
@@ -270,7 +283,8 @@ what a hand-rolled verifier would have to enforce itself:
 - **The trust pool holds certificates, not SPKIs.** `RootCAs`/`ClientCAs`
   take certificate entries, so the peer's public material in the pairing row
   is its self-signed certificate (One certificate per principal), not the bare
-  SPKI the admission keys travel as.
+  SPKI the admission keys travel as. A pool holds every such certificate the
+  store rows pin for that name.
 - **The public CA limits do not bind.** A private pinned pairing is outside
   the subscriber regime, so the 398-day cap and its shorter successors do not
   apply. The 15-year bound follows Mozilla's websites-trust horizon; it exists
@@ -290,9 +304,9 @@ its keep.
 - **Each certificate carries both usages** (`ServerAuth` and `ClientAuth`) — each
   node acts as server for its own leg of life and as client for the other,
   and one symmetric usage list keeps the config one-spelling.
-- **Verification is the library's, over a single-certificate pool** — system
-  roots are absent, `InsecureSkipVerify` is absent, and the peer's certificate
-  is the only anchor (`RootCAs` client-side, `ClientCAs` server-side).
+- **Verification is the library's, over a pool of pins** — system roots are
+  absent, `InsecureSkipVerify` is absent, and only the peer's pinned
+  certificate(s) are anchors (`RootCAs` client-side, `ClientCAs` server-side).
 - **No suite selection of our own** — AES-GCM versus ChaCha20-Poly1305 is
   the library's hardware decision; the record picks nothing.
 - **Key exchange is inherited** — TLS 1.3 mandates ephemeral DH, so forward
@@ -307,27 +321,22 @@ its keep.
 ### Mixed pairings
 
 The proof envelope does not change, so a v4 and a v5 node authenticate each
-other at admission. The implementing change therefore carries the channel
-requirement on the admission request: a v5 exit refuses an admission that
-declares no channel, with the camouflage 404, while a v4 exit ignores the
-marker, admits, and then treats the v5 handshake's bytes as a frame-layer
-protocol violation — a teardown, never a downgrade. No direction of a
-half-upgraded pairing continues unprotected. Since v4's implementation is
-pending, the folded option also exists — land credential and channel as one
-wire change, and the mixed state never occurs; sequencing them separately
-buys two independent review surfaces for the cost of the teardown above.
+other at admission. v5 is the only generation implemented (d236), so v4's
+implementation was skipped and no marker exists: a v3 bearer or any earlier
+wire shape simply fails admission and receives the camouflage 404. No
+half-upgraded pairing continues unprotected.
 
 ## Implementation surface
 
 Nothing in this design is cryptographic code. The new surface is:
 
-| piece                                      | shape                                                                            |
-| ------------------------------------------ | -------------------------------------------------------------------------------- |
-| `net.Conn` adapter over `tunnelStream`     | Read, Write, Close and deadlines delegating to the frame-msg primitives          |
-| certificate minting                        | one `x509.CreateCertificate` call and its extension fields                       |
-| the TLS trust wiring                       | single-certificate `RootCAs`/`ClientCAs`, `ServerName`, `SessionTicketsDisabled` |
-| placement in three modes + failure posture | handshake after admission, alert mapped to teardown                              |
-| the refusal matrix                         | below — the bulk of the change                                                   |
+| piece                                      | shape                                                                                |
+| ------------------------------------------ | ------------------------------------------------------------------------------------ |
+| `net.Conn` adapter over `tunnelStream`     | Read, Write, Close and deadlines delegating to the frame-msg primitives              |
+| certificate minting                        | one `x509.CreateCertificate` call and its extension fields                           |
+| the TLS trust wiring                       | pinned-certificate-set `RootCAs`/`ClientCAs`, `ServerName`, `SessionTicketsDisabled` |
+| placement in three modes + failure posture | handshake after admission, alert mapped to teardown                                  |
+| the refusal matrix                         | below — the bulk of the change                                                       |
 
 The bug list is mint plumbing, not math: a certificate that omits the name the
 peer dials, a validity window too tight for the skew the bounds promise, and a
@@ -382,8 +391,10 @@ failing closed.
 
 **Unchanged**
 
-- The DoS surface: verify first, handshake second; unauthenticated floods
-  still cost one verify, and rate limiting stays hygiene.
+- The DoS surface: the outer proof first, then the handshake; an
+  unauthenticated flood still costs one certificate verify and an admitted
+  peer pays the proof verify plus a handshake, and rate limiting stays
+  hygiene.
 - End-to-end target validation (VPN-R29, VPN-R55): the inner session
   authenticates the two nodes and never the target; the client still sees the
   target's own certificate.
@@ -479,9 +490,9 @@ failing closed.
    `estige public` re-derives the entry from an existing key, and
    `estige key check` validates the certificate like every other row.
 2. **Adapter and TLS config** — `net.Conn` over `tunnelStream` and the
-   standard `tls.Config` wiring: the single-certificate `RootCAs`/`ClientCAs`
-   pools, `ServerName`, `RequireAndVerifyClientCert`, and
-   `SessionTicketsDisabled`.
+   standard `tls.Config` wiring: the pinned-set `RootCAs`/`ClientCAs` pools
+   (every row of the selected principal, for a staged rotation), `ServerName`,
+   `RequireAndVerifyClientCert`, and `SessionTicketsDisabled`.
 3. **Placement** — handshake after admission in modes C, D and E, with the
    failure posture mapped to teardown and the camouflage vocabulary.
 4. **Refusal matrix** — the tests above, plus end-to-end cases mirroring

@@ -81,8 +81,8 @@ path" is exactly the oracle the 404 policy exists to remove.
   inside the tunnel's TLS and are never seen by the exit node's policy layer.
 - No egress without policy: the exit node resolves and pins the target and
   enforces the egress table (default deny for RFC 1918/metadata/loopback,
-  ports 80/443; operator opt-ins arrive as `VPN_TUNNEL_EGRESS` until d104's
-  store carries them — docs/d108) before the first byte leaves.
+  ports 80/443; operator opt-ins arrive as `exit.json`'s `egress` block, and a
+  relay row may narrow its own — docs/d078/d236) before the first byte leaves.
 - No silent degradation: a node that is not armed refuses to boot rather than
   binding a port that answers 404 to everything (docs/d084's kill-switch law),
   and a degraded relay posture exists only behind `-insecure-exit` (docs/d171).
@@ -128,16 +128,17 @@ config file grew in their place: the Termux runit `run` script sources
 `EnvironmentFile=`, and the binary still sees only environment variables
 (docs/d108/d110).
 
-Two units, not one `estige@.service`: the roles carry disjoint credentials
-(`VPN_OPERATOR_KEYS` vs `VPN_OPERATOR_TOKEN`) and disjoint listeners (the
+Two units, not one `estige@.service`: the roles carry disjoint host keys and
+pairing files (`exit.json` vs `relay.json`, d236) and disjoint listeners (the
 funnel port vs loopback CONNECT/SOCKS5). A template would need per-instance
-credential indirection and would still ship two different `ExecStart=` shapes;
+store indirection and would still ship two different `ExecStart=` shapes;
 two readable units state the boundary directly (docs/d090). The env files are
-`%config(noreplace)` / conffiles, so upgrades do not overwrite credentials, and
-both units ship an empty `CapabilityBoundingSet` — a low port is an explicit
+`%config(noreplace)` / conffiles, so upgrades do not overwrite operator edits,
+and both units ship an empty `CapabilityBoundingSet` — a low port is an explicit
 operator drop-in, not a silent grant.
 
-The container image survives (it is still the artifact for a container host)
-but the in-process launch does not: the operator runs it with their own
-`podman run`, service manager, or systemd unit. That is why the workload API is
+The container image survives (it is still the artifact for a container host),
+packaged from the host-built binary by `go run build.go` and launched by
+`go run run.go` (d236). The in-process launch does not: the operator runs it
+with their own service manager, or systemd unit. That is why the workload API is
 no longer a dependency of this unit — the frontmatter edge is gone.

@@ -60,14 +60,10 @@ func TestH2PostUnboundedEndToEndOverHTTP2Front(t *testing.T) {
 	}))
 	upPort := portOf(t, upstream.Listener.Addr().String())
 
-	armTestTunnelEnv(t)
-	s := &server{}
-	if err := s.enableTunnel(egressConfig{
+	s := newTunnelServer(t, true, egressConfig{
 		AllowCidrs: []string{"127.0.0.0/8"},
 		Ports:      []uint16{upPort},
-	}); err != nil {
-		t.Fatal(err)
-	}
+	})
 	backend := newHTTPServer(t, s)
 
 	front := newHTTP2Front(t, backend)
@@ -78,19 +74,19 @@ func TestH2PostUnboundedEndToEndOverHTTP2Front(t *testing.T) {
 	}
 	fu.Scheme = "wss"
 	fu.Path = tunnelPath
-	t.Setenv(envTunnelURL, fu.String())
+	writeTestRelayJSON(t, fu.String())
 	t.Setenv(envClientLabel, "mode-c-e2e")
 
 	httpAddr := freeLoopbackAddr(t)
 	socksAddr := freeLoopbackAddr(t)
-	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, false, false)
+	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, relaySelection{}, false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithCancel(context.Background())
+	runCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	relayDone := make(chan error, 1)
-	go func() { relayDone <- runRelayNode(ctx, cfg) }()
+	go func() { relayDone <- runRelayNode(runCtx, cfg) }()
 
 	logBuf := captureLog(t)
 	waitForHealth(t, "http://"+httpAddr+healthPath)
@@ -138,7 +134,8 @@ func TestH2PostUnboundedEndToEndOverHTTP2Front(t *testing.T) {
 		waitForLog(t, logBuf, "transport=h2-post-unbounded")
 		waitForLog(t, logBuf, "transport=h2-post-unbounded")
 		dumped := logBuf.String()
-		if strings.Contains(dumped, testTunnelToken) {
+		assertNoAdmissionMaterial(t, dumped)
+		if strings.Contains(dumped, encodeEPub(testV5CertDER)) {
 			t.Fatalf("token leaked into the log:\n%s", dumped)
 		}
 	})

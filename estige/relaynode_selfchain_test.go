@@ -6,22 +6,20 @@ import (
 )
 
 func TestRelayConfigRefusesSelfChain(t *testing.T) {
-	t.Setenv(envTunnelURL, "https://relay.example.test/vpn")
-	t.Setenv(envOperatorToken, "token")
+	writeTestRelayJSON(t, "https://relay.example.test/vpn")
 	t.Setenv("HTTP_PROXY", "http://127.0.0.1:3128")
 
-	_, err := relayConfigFromEnv("127.0.0.1:3128", "127.0.0.1:1080", false, true)
+	_, err := relayConfigFromEnv("127.0.0.1:3128", "127.0.0.1:1080", relaySelection{}, false, true)
 	if !errors.Is(err, errSelfChained) {
 		t.Fatalf("relayConfigFromEnv err = %v, want errSelfChained", err)
 	}
 }
 
 func TestRelayConfigAcceptsForeignChain(t *testing.T) {
-	t.Setenv(envTunnelURL, "https://relay.example.test/vpn")
-	t.Setenv(envOperatorToken, "token")
+	writeTestRelayJSON(t, "https://relay.example.test/vpn")
 	t.Setenv("HTTPS_PROXY", "http://proxy.example.test:3128")
 
-	cfg, err := relayConfigFromEnv("127.0.0.1:3128", "127.0.0.1:1080", false, true)
+	cfg, err := relayConfigFromEnv("127.0.0.1:3128", "127.0.0.1:1080", relaySelection{}, false, true)
 	if err != nil {
 		t.Fatalf("relayConfigFromEnv: %v", err)
 	}
@@ -54,8 +52,7 @@ func TestRelayConfigRefusesSelfChainAcrossSpellings(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Setenv(envTunnelURL, "https://relay.example.test/vpn")
-			t.Setenv(envOperatorToken, "token")
+			writeTestRelayJSON(t, "https://relay.example.test/vpn")
 			t.Setenv(tc.envVar, tc.value)
 
 			// The socks listener stays clear of the value under test unless it
@@ -64,7 +61,7 @@ func TestRelayConfigRefusesSelfChainAcrossSpellings(t *testing.T) {
 			if tc.proxyAddr == socksAddr {
 				socksAddr = "127.0.0.1:1081"
 			}
-			_, err := relayConfigFromEnv(tc.proxyAddr, socksAddr, false, true)
+			_, err := relayConfigFromEnv(tc.proxyAddr, socksAddr, relaySelection{}, false, true)
 			if !errors.Is(err, errSelfChained) {
 				t.Fatalf("%s=%q against listener %q: err = %v, want errSelfChained",
 					tc.envVar, tc.value, tc.proxyAddr, err)
@@ -79,11 +76,10 @@ func TestRelayConfigRefusesSelfChainAcrossSpellings(t *testing.T) {
 // The tunnel URL is ws:// on purpose — an https:// URL reads HTTPS_PROXY, not
 // HTTP_PROXY, so an HTTP_PROXY-only fixture would resolve to no chain at all.
 func TestRelayConfigAcceptsSamePortDifferentHost(t *testing.T) {
-	t.Setenv(envTunnelURL, "ws://relay.example.test/vpn")
-	t.Setenv(envOperatorToken, "token")
+	writeTestRelayJSON(t, "ws://relay.example.test/vpn")
 	t.Setenv("HTTP_PROXY", "http://proxy.example.test:3128")
 
-	cfg, err := relayConfigFromEnv("127.0.0.1:3128", "127.0.0.1:1080", false, true)
+	cfg, err := relayConfigFromEnv("127.0.0.1:3128", "127.0.0.1:1080", relaySelection{}, false, true)
 	if err != nil {
 		t.Fatalf("relayConfigFromEnv: %v", err)
 	}
@@ -102,10 +98,9 @@ func TestRelayConfigAcceptsOtherLoopbackFamily(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.value+" vs "+tc.proxyAddr, func(t *testing.T) {
-			t.Setenv(envTunnelURL, "ws://relay.example.test/vpn")
-			t.Setenv(envOperatorToken, "token")
+			writeTestRelayJSON(t, "ws://relay.example.test/vpn")
 			t.Setenv(tc.envVar, tc.value)
-			if _, err := relayConfigFromEnv(tc.proxyAddr, "127.0.0.1:1080", false, true); err != nil {
+			if _, err := relayConfigFromEnv(tc.proxyAddr, "127.0.0.1:1080", relaySelection{}, false, true); err != nil {
 				t.Fatalf("%s=%q against listener %q: err = %v, want acceptance",
 					tc.envVar, tc.value, tc.proxyAddr, err)
 			}

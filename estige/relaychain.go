@@ -6,8 +6,8 @@
 // WHY the chain is hand-rolled here instead of http.Transport.Proxy: the
 // chain is a ROUTE, not a policy object. Transport.Proxy is ambient,
 // per-transport, and for a cleartext URL it becomes a forwarding proxy
-// that reads the bearer (the old "Proxy is nil on purpose" fear, modec.go
-// / modee.go). chainProxy.dial is the opposite shape — one parse at
+// that reads the credential (the "Proxy is nil on purpose" rule, modec.go /
+// exchangestream.go). chainProxy.dial is the opposite shape — one parse at
 // startup, one blind TCP tunnel (CONNECT or SOCKS5) every carrier's dial
 // rides, TLS still end-to-end over it (VPN-R28/R55 untouched). See
 // docs/d094 for the full decision.
@@ -48,7 +48,7 @@ var chainEnvVars = []string{
 // dialFunc is the shape every carrier's TCP leg dials through — direct in
 // the ordinary deployment, chainProxy.dial when a chain is configured
 // (docs/d094). Passing nil means direct.
-type dialFunc func(ctx context.Context, network, addr string) (net.Conn, error)
+type dialFunc func(dialCtx context.Context, network, addr string) (net.Conn, error)
 
 // directDial is the unchained leg. The timeout bounds a dial the caller's
 // context forgot to bound (VPN-R39's rule applied to the tunnel dial).
@@ -178,13 +178,13 @@ func parseChainProxy(raw string) (*chainProxy, error) {
 // chain handshake (CONNECT or SOCKS5) by hand, hand back the raw conn.
 // The handshake is bounded even when the caller's context is not
 // (VPN-R39: a black-holed proxy ends in an error, not a parked read).
-func (p *chainProxy) dial(ctx context.Context, network, addr string) (net.Conn, error) {
-	raw, err := directDial(ctx, network, p.addr)
+func (p *chainProxy) dial(dialCtx context.Context, network, addr string) (net.Conn, error) {
+	raw, err := directDial(dialCtx, network, p.addr)
 	if err != nil {
 		return nil, fmt.Errorf("chain proxy %s: %w", p.addr, err)
 	}
 	deadline := time.Now().Add(tunnelHandshakeTimeout)
-	if d, ok := ctx.Deadline(); ok && d.Before(deadline) {
+	if d, ok := dialCtx.Deadline(); ok && d.Before(deadline) {
 		deadline = d
 	}
 	_ = raw.SetDeadline(deadline)
@@ -355,18 +355,18 @@ func (p *chainProxy) socks5Connect(raw net.Conn, addr string) (net.Conn, error) 
 // override knob, nothing here may weaken verification). Over a chain the
 // proxy sees SNI and ciphertext only; the certificate the relay node
 // verifies is the exit node's own, exactly as if dialed direct.
-func dialTLS(ctx context.Context, dial dialFunc, addr, serverName string, nextProtos []string, skipVerify bool) (net.Conn, error) {
+func dialTLS(dialCtx context.Context, dial dialFunc, addr, serverName string, nextProtos []string, skipVerify bool) (net.Conn, error) {
 	if dial == nil {
 		dial = directDial
 	}
-	raw, err := dial(ctx, "tcp", addr)
+	raw, err := dial(dialCtx, "tcp", addr)
 	if err != nil {
 		return nil, err
 	}
 	// docs/d171 posture (a): the switch skips verification, never
 	// encryption and never MinVersion. Off is the only default.
 	td := tls.Client(raw, tunnelTLSConfig(serverName, nextProtos, skipVerify))
-	if err := td.HandshakeContext(ctx); err != nil {
+	if err := td.HandshakeContext(dialCtx); err != nil {
 		_ = raw.Close()
 		return nil, err
 	}

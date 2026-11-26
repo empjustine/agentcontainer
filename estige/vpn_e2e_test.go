@@ -95,29 +95,25 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 
 	// Server: the tunnel through the production path — no allowlist, no
 	// second face (docs/d108).
-	armTestTunnelEnv(t)
-	s := &server{}
-	if err := s.enableTunnel(egressConfig{
+	s := newTunnelServer(t, true, egressConfig{
 		AllowCidrs: []string{"127.0.0.0/8"},
 		Ports:      []uint16{upPort},
-	}); err != nil {
-		t.Fatal(err)
-	}
+	})
 	proxy := newHTTPSServer(t, s)
 
-	// Relay node: env chain + runRelayNode, exactly as -mode relay wires it.
-	t.Setenv(envTunnelURL, "wss://"+proxy.Listener.Addr().String()+tunnelPath)
+	// Relay node: store + runRelayNode, exactly as -mode relay wires it.
+	writeTestRelayJSON(t, "wss://"+proxy.Listener.Addr().String()+tunnelPath)
 	t.Setenv(envClientLabel, "e2e-label")
 	httpAddr := freeLoopbackAddr(t)
 	socksAddr := freeLoopbackAddr(t)
-	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, false, false)
+	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, relaySelection{}, false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithCancel(context.Background())
+	runCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	relayDone := make(chan error, 1)
-	go func() { relayDone <- runRelayNode(ctx, cfg) }()
+	go func() { relayDone <- runRelayNode(runCtx, cfg) }()
 
 	// One process-wide log buffer covers both roles — the credential-free
 	// invariant must hold across ALL lines, not a chosen file's.
@@ -389,9 +385,7 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 	t.Run("connection log carries metadata and never the credential", func(t *testing.T) {
 		waitForLog(t, logBuf, "event=close")
 		dumped := logBuf.String()
-		if strings.Contains(dumped, testTunnelToken) {
-			t.Fatalf("token leaked into the log:\n%s", dumped)
-		}
+		assertNoAdmissionMaterial(t, dumped)
 		if !strings.Contains(dumped, `label="e2e-label"`) {
 			t.Fatalf("client label missing from the session line:\n%s", dumped)
 		}
@@ -414,19 +408,18 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 // answer that could only come from a direct dial.
 func TestCleartextForwardFailsClosedWithoutTunnel(t *testing.T) {
 	dead := reserveLoopbackAddr() // released: connecting to it must be refused
-	t.Setenv(envTunnelURL, "wss://"+dead+tunnelPath)
-	t.Setenv(envOperatorToken, testTunnelToken)
+	writeTestRelayJSON(t, "wss://"+dead+tunnelPath)
 	t.Setenv(envClientLabel, "dead-tunnel-fwd")
 	httpAddr := freeLoopbackAddr(t)
 	socksAddr := freeLoopbackAddr(t)
-	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, false, false)
+	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, relaySelection{}, false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithCancel(context.Background())
+	runCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	relayDone := make(chan error, 1)
-	go func() { relayDone <- runRelayNode(ctx, cfg) }()
+	go func() { relayDone <- runRelayNode(runCtx, cfg) }()
 	waitForHealth(t, "http://"+httpAddr+healthPath)
 
 	conn := rawDial(t, httpAddr)
@@ -457,26 +450,22 @@ func TestCleartextForwardFailsClosedWithoutTunnel(t *testing.T) {
 func TestRelayLegacyIPRelaySwitch(t *testing.T) {
 	// The exit stays at its defaults: no IP-exit switch, so a target that
 	// passes the relay must still die at the exit's VPN-R22 gate.
-	armTestTunnelEnv(t)
-	s := &server{}
-	if err := s.enableTunnel(egressConfig{}); err != nil {
-		t.Fatal(err)
-	}
+	s := newTunnelServer(t, true, egressConfig{})
 	proxy := newHTTPSServer(t, s)
-	t.Setenv(envTunnelURL, "wss://"+proxy.Listener.Addr().String()+tunnelPath)
+	writeTestRelayJSON(t, "wss://"+proxy.Listener.Addr().String()+tunnelPath)
 	t.Setenv(envClientLabel, "legacy-ip")
 
 	startRelay := func(t *testing.T, legacyIPRelay bool) (string, string, func()) {
 		t.Helper()
 		httpAddr := freeLoopbackAddr(t)
 		socksAddr := freeLoopbackAddr(t)
-		cfg, err := relayConfigFromEnv(httpAddr, socksAddr, legacyIPRelay, false)
+		cfg, err := relayConfigFromEnv(httpAddr, socksAddr, relaySelection{}, legacyIPRelay, false)
 		if err != nil {
 			t.Fatal(err)
 		}
-		ctx, cancel := context.WithCancel(context.Background())
+		runCtx, cancel := context.WithCancel(context.Background())
 		done := make(chan error, 1)
-		go func() { done <- runRelayNode(ctx, cfg) }()
+		go func() { done <- runRelayNode(runCtx, cfg) }()
 		waitForHealth(t, "http://"+httpAddr+healthPath)
 		return httpAddr, socksAddr, func() {
 			cancel()

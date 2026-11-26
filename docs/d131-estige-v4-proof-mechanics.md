@@ -1,7 +1,7 @@
 ---
 id: d131
 type: module-design
-status: draft
+status: active
 title: "d131 — the v4 credential's proof mechanism: envelopes, verification and the version counters"
 parent: estige
 depends-on: [d104]
@@ -63,6 +63,26 @@ proxy, and the collision is what produced a "d104 v4 / bearer v3" reading in
 circulation. Nothing was ever deployed under the old counting on the proof
 side, and the bearer side keeps d108's name, so the renumber is in place
 rather than a generation bump.
+
+## Superseded surface, surviving mechanism (d236)
+
+This record's envelope, both signatures, the nonce tie and the single-use ring
+are what v5 ships — the mechanism below is current. Its _surface_ moved twice:
+the header names are now `e-relay-auth` (request) and `e-exit-auth`
+(response), each with an accompanying `e-pub` certificate value, and the
+credential material lives in the role store rather than the environment. The
+generation this record numbers v4 was skipped: d236 folds its proof pair into
+v5 (d108's table states what shipped). Read `X-Relay-Proof` below as
+`e-relay-auth` and `X-Exit-Proof` as `e-exit-auth`; the signed labels stay
+`estige/v2/…` because they version the envelope, not the deployment.
+
+One sentence below is unachievable as written: "a credential the exit refused
+does not demote the transport ladder". In v5 the exit's refusal is the
+camouflage 404, byte-identical to a missing path and to a carrier failure by
+design (VPN-R34), so the relay _cannot_ tell a stale credential from a dead
+carrier and the ladder demotes, failing closed at the last rung. What is
+terminal is the other direction: the relay's own verification of the exit's
+proof stops the dial immediately, because there the relay holds the evidence.
 
 ## Mechanism — single-flight mutual Ed25519 proofs
 
@@ -192,7 +212,8 @@ exit → relay:  X-Exit-Proof:  v2.<exit-key-name>.<nonce_e>.<sig_e>
   grows only on proofs that verified — a forged or unknown-name proof never
   reaches one, and an attacker without a principal's private key cannot mint
   valid proofs to fill that side's cache — so each is one LRU ring with a 64
-  Ki-entry cap (≈2 MiB at 16 bytes per nonce) whose eviction horizon is 64 Ki
+  Ki-entry cap (≈5.3 MiB as shipped: 16 raw bytes per nonce, plus the map entry
+  and the eviction-order slot around it) whose eviction horizon is 64 Ki
   _genuine_ authentications: practically forever, and no clock is read anywhere
   in the auth path — a drifting host can cause an outage elsewhere, never a
   weakened or widened auth decision.
@@ -246,32 +267,40 @@ The store is read and validated **once at boot**; the admitted sets load
 into memory. Verification is then symmetric on both nodes and has bounded,
 constant cost:
 
-- **Each node scans its admitted set's names — constant-time per row, over
-  every row, no early exit** (VPN-R33's discipline, kept): the exit scans
-  `exit.json`'s `relays` entries; the relay scans `relay.json`'s ≤2
-  `exit` entries. Every name is compared full-width, and the scan visits
-  all rows whether or not one matched, so neither the matched principal's
-  position nor the set's contents leak through timing. Nanoseconds per row
-  against the bounded-set cap (32, carried over) — a lookup, not the
-  credential check.
-- **Exactly one Ed25519 verify is computed per proof** — the matched
-  public key's signature check, full-width by the primitive. No match
-  means no verify: that request answers the camouflage 404 having paid
-  one scan. The whole cost argument: authentication is O(rows) byte
-  compares plus a single verify, independent of set size and of which
-  name was presented — a fifty-relay exit pays what a one-relay exit
-  pays. The verify itself costs ~30–80µs (vs. a MAC's sub-microsecond):
+- **Each node looks its peer up by name in a map built at boot.** The exit
+  indexes `exit.json`'s `relays` entries and a relay indexes `relay.json`'s
+  `exit` rows (≤2, cap 32 carried over) into a name → pinned-certificate(s)
+  map, so the lookup is one hash probe: its cost does not depend on the set's
+  size, and it gives a prober nothing to measure — no per-row work means no
+  matched-position signal. This is VPN-R33's discipline satisfied
+  structurally rather than by a full-width scan: the earlier linear
+  compare-every-row shape existed to keep a linear scan from leaking, and a
+  map keyed by the presented name has nothing to leak. The work is one
+  lookup, not the credential check.
+- **An unauthenticated request pays one certificate verify; a pinned one pays
+  two.** The presented `e-pub` certificate is parsed and its self-signature
+  checked _before_ any pin is consulted — that is what makes a malformed or
+  CA-shaped certificate a refusal rather than a lookup — so every request, from
+  anyone, costs one `x509.ParseCertificate` plus one Ed25519 verify. A request
+  whose certificate matches a pin then pays the proof's own verify as well.
+  Both are the primitive's full-width check and independent of the set's size:
+  a fifty-relay exit pays what a one-relay exit pays. At ~30–80µs per verify
+  that is two verifies per admitted exchange and one per refused probe —
   negligible at handshake rates, a few percent of a core at a few hundred
-  per-request authentications per second (modes C/E) — recorded in the
-  consequences with its DoS arithmetic.
+  authentications per second (modes C/E), and the DoS arithmetic in d169 rests
+  on exactly this number.
 - **Each replay cache costs one map probe per _verified_ proof** — forged
   and unknown-name proofs never reach either — and its memory is the cap,
   independent of attack traffic: the exit's ring grows only on genuine
   handshakes, the relay's only on exit proofs it accepted, so an attacker
-  without a principal's private key cannot grow that side's ring. Two rings at
-  ≈2 MiB each is the whole memory cost of replay protection in both directions.
-- The residual timing delta — an unknown name skips its one verify,
-  tens of microseconds — is below network jitter and against a name that
-  is a log-safe label the operator's logs already print; the load-bearing
-  oracle control is VPN-R34's byte-identical response vocabulary, not
-  microsecond flatness (the dummy-key flatten is rejected below).
+  without a principal's private key cannot grow that side's ring. The shipped
+  `nonceRing` measures ≈5.3 MiB at its 64 Ki cap (85 B/entry: the map entry
+  plus the eviction-order slice), so both directions together cost ≈10.6 MiB of
+  replay protection — the deployment-sizing number, not the 2 MiB an earlier
+  estimate of the map alone implied.
+- The residual timing delta — an unknown name skips the proof verify that a
+  pinned one also pays, tens of microseconds — is below network jitter and
+  against a name that is a log-safe label the operator's logs already print;
+  the load-bearing oracle control is VPN-R34's byte-identical response
+  vocabulary, not microsecond flatness (the dummy-key flatten is rejected
+  below).

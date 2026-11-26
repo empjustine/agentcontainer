@@ -59,14 +59,14 @@ for the whole tree: no other record renumbers these. d104's credential
 generations were renumbered onto it (its "v1 bearer / v2 Ed25519" reading is
 retired — see the history note below).
 
-| Generation | Edge                                                            | Operator credential                                                                                                            | State                                                                  |
-| ---------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
-| **v1**     | a trusted reverse proxy with allowlisted hostnames              | none at the edge; provider keys traverse it in plaintext                                                                       | historical — previously deployed                                       |
-| **v2**     | the same trusted reverse proxy, with symmetric auth credentials | symmetric credential at the edge                                                                                               | never implemented or deployed — skipped for simplicity in favour of v3 |
-| **v3**     | tunnel transports — h2-POST / WebSocket / h1.1-POST (d073/d077) | shared bearer, injected as env (`VPN_*`)                                                                                       | deployed, working                                                      |
-| **v4**     | the same tunnel transports                                      | d104's mutual single-use nonce-bound Ed25519 proofs, with key material in files under `~/.local/share/estige/` rather than env | in progress, not yet exercised                                         |
-| **v5**     | the same transports, with an inner TLS 1.3 session (d169)       | v4 proofs, plus a self-signed store-key certificate for the channel                                                            | design on record                                                       |
-| **v6**     | front-door TLS 1.3 mTLS at the Funnel edge (d211)               | the pinned store-key certificate only; no admission proofs                                                                     | design on record                                                       |
+| Generation | Edge                                                            | Operator credential                                                                                                               | State                                                                  |
+| ---------- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **v1**     | a trusted reverse proxy with allowlisted hostnames              | none at the edge; provider keys traverse it in plaintext                                                                          | historical — previously deployed                                       |
+| **v2**     | the same trusted reverse proxy, with symmetric auth credentials | symmetric credential at the edge                                                                                                  | never implemented or deployed — skipped for simplicity in favour of v3 |
+| **v3**     | tunnel transports — h2-POST / WebSocket / h1.1-POST (d073/d077) | shared bearer, injected as env (`VPN_*`)                                                                                          | deployed, working                                                      |
+| **v4**     | the same tunnel transports                                      | d104's mutual single-use nonce-bound Ed25519 proofs, with key material in files under `~/.local/share/estige/` rather than env    | skipped — v5 folds its credential into the shipped store (d236)        |
+| **v5**     | three tunnel transports, with an inner TLS 1.3 session (d169)   | the blind `e-relay-auth`/`e-exit-auth` proof pair plus a self-signed store-key certificate; the store is the whole config surface | implemented in `estige/` (d236/d241)                                   |
+| **v6**     | front-door TLS 1.3 mTLS at the Funnel edge (d211)               | the pinned store-key certificate only; no admission proofs                                                                        | design on record                                                       |
 
 Two things this table settles that were previously scattered or ambiguous:
 
@@ -79,9 +79,11 @@ Two things this table settles that were previously scattered or ambiguous:
   what moves is the material's home (files, not `VPN_*` env). The `VPN_*`
   tunnel variables are deprecated with v4 and retire when it lands (VPN-R32's
   amendment).
-- **v5 adds a channel; v6 moves it to the front door.** Both keep v4's store
-  keys. v6 drops the admission proofs and the inner session that v5 needs
-  (d169, d211).
+- **v5 adds a channel; v6 moves it to the front door.** Both keep the store
+  key. v6 drops the admission proofs and the inner session that v5 needs
+  (d169, d211). v5 ships on `h2-post-unbounded`, `websocket` and
+  `h2-post-windowed`; the h1.1 windowed floor retired because its window
+  cannot carry a handshake through a buffering gateway (d241).
 
 A third vocabulary exists and must still not be read across: d073/d077 number
 **delivery** generations, where their v2 bundles the allowlist relay _and_ the

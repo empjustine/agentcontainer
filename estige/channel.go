@@ -12,17 +12,19 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"sync"
 	"time"
 )
 
-// clientChannelTLSConfig pins one peer certificate for the relay side.
-func clientChannelTLSConfig(local tls.Certificate, peer *x509.Certificate) (*tls.Config, error) {
+// clientChannelTLSConfig pins the peer's certificate set for the relay side:
+// one exit may carry two rows during a staged rotation, and either verifies.
+func clientChannelTLSConfig(local tls.Certificate, peers []*x509.Certificate) (*tls.Config, error) {
 	if err := validateLocalChannelCert(local); err != nil {
 		return nil, err
 	}
-	pool, err := channelPool([]*x509.Certificate{peer})
+	pool, err := channelPool(peers)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +106,7 @@ func newChannelConn(s tunnelStream) *channelConn {
 }
 
 func bodyCarrier(transport string) bool {
-	return transport == carrierH2Unbounded || transport == carrierH2Windowed || transport == carrierH1Windowed
+	return transport == carrierH2Unbounded || transport == carrierH2Windowed
 }
 
 func (c *channelConn) Read(p []byte) (int, error) {
@@ -176,25 +178,25 @@ func (c *channelConn) fail(err error) error {
 
 // clientChannelHandshake wraps an admitted carrier and completes the inner
 // session. A failed handshake is a protocol violation, never a downgrade.
-func clientChannelHandshake(ctx context.Context, s tunnelStream, local tls.Certificate, peer *x509.Certificate) (*tls.Conn, error) {
-	cfg, err := clientChannelTLSConfig(local, peer)
+func clientChannelHandshake(handshakeCtx context.Context, s tunnelStream, local tls.Certificate, peers []*x509.Certificate) (*tls.Conn, error) {
+	cfg, err := clientChannelTLSConfig(local, peers)
 	if err != nil {
 		return nil, err
 	}
-	return runChannelHandshake(ctx, s, cfg, false)
+	return runChannelHandshake(handshakeCtx, s, cfg, false)
 }
 
 // serverChannelHandshake is the exit side of the same session. The peer list
 // is the principal's admitted certificates from the store.
-func serverChannelHandshake(ctx context.Context, s tunnelStream, local tls.Certificate, peers []*x509.Certificate) (*tls.Conn, error) {
+func serverChannelHandshake(handshakeCtx context.Context, s tunnelStream, local tls.Certificate, peers []*x509.Certificate) (*tls.Conn, error) {
 	cfg, err := serverChannelTLSConfig(local, peers)
 	if err != nil {
 		return nil, err
 	}
-	return runChannelHandshake(ctx, s, cfg, true)
+	return runChannelHandshake(handshakeCtx, s, cfg, true)
 }
 
-func runChannelHandshake(ctx context.Context, s tunnelStream, cfg *tls.Config, server bool) (*tls.Conn, error) {
+func runChannelHandshake(handshakeCtx context.Context, s tunnelStream, cfg *tls.Config, server bool) (*tls.Conn, error) {
 	streamConn := newChannelConn(s)
 	var conn *tls.Conn
 	if server {
@@ -202,9 +204,9 @@ func runChannelHandshake(ctx context.Context, s tunnelStream, cfg *tls.Config, s
 	} else {
 		conn = tls.Client(streamConn, cfg)
 	}
-	handshakeCtx, cancel := context.WithTimeout(ctx, tunnelHandshakeTimeout)
+	deadlineCtx, cancel := context.WithTimeout(handshakeCtx, tunnelHandshakeTimeout)
 	defer cancel()
-	if err := conn.HandshakeContext(handshakeCtx); err != nil {
+	if err := conn.HandshakeContext(deadlineCtx); err != nil {
 		s.protocolViolation()
 		_ = s.Close()
 		return nil, fmt.Errorf("inner TLS handshake: %w", err)
@@ -224,14 +226,29 @@ func newTLSTunnelStream(conn *tls.Conn, inner tunnelStream) tunnelStream {
 }
 
 func (s *tlsTunnelStream) readTunnelMsg() ([]byte, error) {
-	return readFrameFromStream(s.conn)
+	msg, err := readFrameFromStream(s.conn)
+	if err != nil && !errors.Is(err, io.EOF) && !errors.Is(err, net.ErrClosed) {
+		s.alert()
+	}
+	return msg, err
 }
 
 func (s *tlsTunnelStream) writeTunnelMsg(msg []byte) error {
 	_ = s.conn.SetWriteDeadline(time.Now().Add(tunnelKeepaliveInterval))
 	defer func() { _ = s.conn.SetWriteDeadline(time.Time{}) }()
 	_, err := s.conn.Write(msg)
+	if err != nil && !errors.Is(err, io.EOF) && !errors.Is(err, net.ErrClosed) {
+		s.alert()
+	}
 	return err
+}
+
+// alert promotes a TLS record failure into the carrier's protocol-violation
+// vocabulary. A bad record is not a clean peer disconnect: it is evidence
+// that the channel was tampered with, and the stream must die here.
+func (s *tlsTunnelStream) alert() {
+	s.inner.protocolViolation()
+	_ = s.conn.Close()
 }
 
 func (s *tlsTunnelStream) setReadDeadline(t time.Time) error { return s.conn.SetReadDeadline(t) }
@@ -240,12 +257,47 @@ func (s *tlsTunnelStream) transport() string                 { return s.inner.tr
 func (s *tlsTunnelStream) sessionID() string                 { return s.inner.sessionID() }
 func (s *tlsTunnelStream) Close() error                      { return s.conn.Close() }
 
-// writeChannelPing sends liveness through the TLS session, not the raw carrier.
-func writeChannelPing(conn net.Conn) error {
-	msg, err := encodeFrame(framePing, tunnelStreamV1, nil)
-	if err != nil {
-		return err
+// windowCarrier is one HTTP window's framed byte pipe. The handshake needs a
+// stream; a window has a request body, a response body and no lifetime beyond
+// its own proof, so the functions are bound to that exchange alone.
+type windowCarrier struct {
+	readFrame  func() ([]byte, error)
+	writeFrame func([]byte) error
+	fail       func()
+	carrier    string
+	session    string
+}
+
+func (w *windowCarrier) readTunnelMsg() ([]byte, error)  { return w.readFrame() }
+func (w *windowCarrier) writeTunnelMsg(msg []byte) error { return w.writeFrame(msg) }
+func (w *windowCarrier) setReadDeadline(time.Time) error { return nil }
+func (w *windowCarrier) protocolViolation()              { w.fail() }
+func (w *windowCarrier) Close() error                    { w.fail(); return nil }
+func (w *windowCarrier) transport() string               { return w.carrier }
+func (w *windowCarrier) sessionID() string               { return w.session }
+
+// windowChannel completes one handshake over a framed window and returns the
+// frame stream the session pump uses inside it. A new window always means a
+// new handshake: a lost window must not strand the next one on a dead record
+// layer (d236).
+func windowChannel(handshakeCtx context.Context, s tunnelStream, local tls.Certificate, peers []*x509.Certificate, server bool) (tunnelStream, error) {
+	var (
+		conn *tls.Conn
+		err  error
+	)
+	if server {
+		conn, err = serverChannelHandshake(handshakeCtx, s, local, peers)
+	} else {
+		conn, err = clientChannelHandshake(handshakeCtx, s, local, peers)
 	}
-	_, err = conn.Write(msg)
-	return err
+	if err != nil {
+		return nil, err
+	}
+	return newTLSTunnelStream(conn, s), nil
+}
+
+// tlsWireSize is a conservative bound on the carrier bytes one plaintext
+// frame becomes: TLS 1.3 adds a record header and tag per 16 KiB chunk.
+func tlsWireSize(n int) int {
+	return n + 22*(1+(n-1)/(16<<10)) + 32
 }

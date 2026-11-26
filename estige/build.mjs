@@ -2,32 +2,20 @@
  * @fileoverview build.mjs — build estige for THIS host (docs/d041; d083 made
  * the build entry per-unit, docs/d113 folded the root builder away).
  *
- * Three targets, and which one registers is a host fact, not a flag:
+ * Two targets, and which one registers is a host fact, not a flag:
  *
- *   - Container host (podman/docker): `estige-image` — the multi-stage
- *     Containerfile (golang builder → scratch runtime that ships the CA
- *     bundle both TLS legs verify against), so the host needs NO go
- *     toolchain. The final stage is scratch on purpose: it pulls from NO
- *     registry, so the image builds even where non-docker.io registries are
- *     blocked (the gcr.io distroless base could not); only golang:1.27 on
- *     docker.io is fetched. Registered only while outbound cloud networking
- *     answers the naive probe (lib/host-capabilities.mjs): the proxy exists to
- *     relay to cloud upstreams, and against a closed network its base-image
- *     --pull would fail anyway — the gate turns that hard failure into a
- *     logged skip.
- *   - No container backend: `estige-native` — the host binary direct runs
- *     use; on Termux the android/arm64 binary through lib/go-build.mjs's
- *     preset (GOOS=android — DNS resolver; see that module's header). Needs a
- *     WORKING go toolchain.
- *   - Every host with a working go toolchain: `estige-packages` — the pure-Go
- *     Termux .deb and Oracle Linux .rpm into packaging/out/. It cross-compiles
- *     the two payload binaries (android/arm64 and linux/amd64), so it does not
- *     depend on this host's OS; no packaging tool is invoked.
+ *   - `estige-native` — the host binary direct runs use, and the input to the
+ *     container image; on Termux the android/arm64 binary through
+ *     lib/go-build.mjs's preset (GOOS=android — DNS resolver; see that
+ *     module's header). Needs a WORKING go toolchain.
+ *   - `estige-packages` — the pure-Go Termux .deb and Oracle Linux .rpm into
+ *     packaging/out/. It cross-compiles the two payload binaries
+ *     (android/arm64 and linux/amd64), so it does not depend on this host's
+ *     OS; no packaging tool is invoked.
  *
- * --pull is load-bearing, not hygiene: the omitted-flag default is the
- * "missing" policy, so a locally-cached golang:1.27 tag is reused even after
- * upstream republishes it — the moving tag the build resolves FROM must be
- * refreshed explicitly (bare --pull = always).
+ * The container image is not a target here: `go build .` then `go run build.go`
+ * packages the binary this builder produces (d236), which is also where the
+ * `--pull` reasoning for the base image lives.
  *
  * Idempotence comes from the CACHES, not from skip checks (docs/d041): a
  * container build on unchanged inputs is a layer-cache hit — seconds, not
@@ -36,15 +24,16 @@
  * up source changes without a flag; only WHICH targets register varies per
  * host. The former skip-if-present checks are gone on purpose: they keyed on
  * tag/file PRESENCE, so editing main.go after a build left the stale
- * image/binary in place unless the operator knew FORCE=1 — a silent-staleness
- * trap of exactly the kind the repo's fail-loudly contract forbids. FORCE=1
- * now means cache-bust: --no-cache for the image build, `-a` for go.
+ * binary in place unless the operator knew FORCE=1 — a silent-staleness trap
+ * of exactly the kind the repo's fail-loudly contract forbids. FORCE=1 now
+ * means cache-bust: `-a` for go (and the Go image command takes its own
+ * --no-cache).
  *
- * argv selects target names (`./build.sh image`); no names builds every
- * registered target. An unknown name is a loud exit 94 with the catalog; a
- * requested-but-gated name logs the gate and is left out.
+ * argv selects target names (`./build.sh estige-native`); no names builds
+ * every registered target. An unknown name is a loud exit 94 with the catalog;
+ * a requested-but-gated name logs the gate and is left out.
  *
- * Env overrides: FORCE · IMAGE_TAG · GOFLAGS.
+ * Env overrides: FORCE · GOFLAGS.
  */
 
 import { spawn } from "node:child_process";
@@ -59,11 +48,6 @@ import {
 	hostBuildEnv,
 	isTermux,
 } from "./lib/go-build.mjs";
-import {
-	CLOUD_PROBE_CANARY,
-	cloudReachable,
-	detectContainerTool,
-} from "./lib/host-capabilities.mjs";
 
 // ---------------------------------------------------------------------------
 // Structured logging (docs/d045)
@@ -267,7 +251,6 @@ const estigeRoot = dirname(fileURLToPath(import.meta.url));
 const termux = isTermux();
 const force = process.env.FORCE === "1";
 
-const containerTool = detectContainerTool();
 
 /**
  * Defense-in-depth line sanitizer (docs/d045). The ROOT cause of tty progress
@@ -317,10 +300,10 @@ function logCommandLine(cmd, stream, target, line) {
 /**
  * Run one command to completion, capturing stdout+stderr LINE BY LINE and
  * re-emitting each as a structured log record (docs/d045): child processes
- * are upstreams (buildah, go) that cannot be made to honor d045 themselves,
- * so the wrapping layer owns the line-boundary. stdio:"inherit" would turn
- * the parallel coding-agent/estige image builds into byte-wise interleaved
- * garbage when several units build at once.
+ * are upstreams (go, and the image backend when the Go command runs it) that
+ * cannot be made to honor d045 themselves, so the wrapping layer owns the
+ * line-boundary. stdio:"inherit" would turn two units building at once into
+ * byte-wise interleaved garbage.
  * @param {string} executable
  * @param {string[]} args
  * @param {{ cwd?: string, env?: Record<string, string>, name?: string, cmd: string }} opts
@@ -383,8 +366,7 @@ const gatedOff = new Set();
 
 /**
  * A gate said no; the name stays knowable so an explicit request gets the
- * gate's reason (the logWarn beside each call) instead of a shrug. Probes
- * themselves stay silent — lib/host-capabilities.mjs's contract.
+ * gate's reason (the logWarn beside each call) instead of a shrug.
  * @type {(...names: string[]) => void}
  */
 function noteGated(...names) {
@@ -393,55 +375,13 @@ function noteGated(...names) {
 	}
 }
 
-// --- the image (container hosts) ---------------------------------------------
-if (containerTool) {
-	// Every image build goes through the explicit subcommand (`image build` /
-	// `buildx build`) rather than the backend-dependent bare `build` alias, and
-	// carries --progress=plain: default progress "auto" is tty-detected, and an
-	// agent harness often IS a pty — which renders buildah/buildx progress as
-	// overlapping redraw frames instead of appendable lines.
-	const imageBuildSubcommand =
-		containerTool === "podman" ? ["image", "build"] : ["buildx", "build"];
-	const imageBuildArgs = [...imageBuildSubcommand, "--progress=plain"];
-	// Derived from the SAME array the build runs, so the `cmd` a line is
-	// filed under cannot drift from the command that produced it.
-	const imageBuildCmd = [containerTool, ...imageBuildSubcommand].join(" ");
-	const imageTag = process.env.IMAGE_TAG ?? "localhost/estige:latest";
+// The container image is owned by go run build.go (d236): the binary is
+// compiled by the host's go toolchain first, then packaged by the Go command.
+// Node builds the binary itself and the packages — no target here requires a
+// container backend any more.
 
-	if (await cloudReachable()) {
-		targets.push({
-			name: "estige-image",
-			fn: async () =>
-				await run(
-					containerTool,
-					[
-						...imageBuildArgs,
-						"--pull",
-						...(force ? ["--no-cache"] : []),
-						"-f",
-						join(estigeRoot, "Containerfile"),
-						"-t",
-						imageTag,
-						estigeRoot,
-					],
-					{ name: "estige-image", cmd: imageBuildCmd },
-				),
-		});
-	} else {
-		noteGated("estige-image");
-		logWarn(
-			"skipping target — outbound cloud networking unreachable (naive probe)",
-			{ target: "estige-image", canary: CLOUD_PROBE_CANARY },
-		);
-	}
-} else {
-	noteGated("estige-image");
-}
-
-// --- the native binary (no container backend) --------------------------------
-if (containerTool) {
-	noteGated("estige-native");
-} else {
+// --- the native binary ------------------------------------------------------
+{
 	const out = join(estigeRoot, termux ? "estige-android" : "estige");
 	targets.push({
 		name: "estige-native",
@@ -450,14 +390,14 @@ if (containerTool) {
 				logError(
 					termux
 						? "no working go toolchain (on Termux: pkg install golang)"
-						: "no working go toolchain (it compiles the host binary — the only thing this host can serve; mise hosts: mise use -g go@1.27)",
+						: "no working go toolchain (it compiles the host binary; mise hosts: mise use -g go@1.27)",
 				);
 				return false;
 			}
 			// Always builds: go's build cache is content-addressed, so an
 			// unchanged tree is a near-instant cache hit and a changed main.go is
 			// picked up without a flag — the former file-exists skip had the same
-			// stale-presence trap as the image skip (module header).
+			// stale-presence trap the module header describes.
 			const flags = [...(force ? ["-a"] : []), ...commonBuildFlags(termux)];
 			const env = termux ? androidBuildEnv(termux) : hostBuildEnv();
 			return await run("go", ["build", ...flags, "-o", out, "."], {
@@ -587,9 +527,8 @@ if (termux) {
 // provisioning (d041), not an artifact, and it is the shared Termux
 // environment the on-device build runs under, so it runs first regardless of
 // selection; packaged artifacts themselves need neither node nor jq.
-// Serialized throughout:
-// Termux cannot parallelize ~1 GB go builds, and on a container host the image
-// is the only registered target anyway.
+// Serialized throughout: Termux cannot parallelize ~1 GB go builds, and the
+// two registered targets both drive the same go build cache.
 const requested = process.argv.slice(2);
 const knownNames = new Set([...gatedOff, ...targets.map((t) => t.name)]);
 const unknown = requested.filter((name) => !knownNames.has(name));
@@ -619,12 +558,7 @@ if (selected.length === 0) {
 	);
 	process.exit(91);
 }
-logInfo(
-	containerTool
-		? "build targets (container host)"
-		: "build targets (bare host — serialized)",
-	{ targets: selected.map((t) => t.name), force },
-);
+logInfo("build targets", { targets: selected.map((t) => t.name), force });
 
 let failed = 0;
 for (const target of selected) {

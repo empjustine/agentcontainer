@@ -123,13 +123,13 @@ agentcontainer/
 │   ├── DESIGN.md                        #   → llama-swap config.d layers, generation-time path baking, capability gating, bearer auth
 │   └── *.md                             #   → this unit's own living docs (d117): hf-cache-upkeep / refresh-...-manifest runbooks, gguf-model-tooling
 │
-├── estige/                              # SSL-VPN tunnel node (Go, one binary, two roles: exit + relay), installed as a package (d073/d077/d120)
-│   ├── main.go                          #   → dispatches the two roles: `-mode exit` (tunnel server) / `-mode relay`, plus `proxy-env` and `-version`
+├── estige/                              # SSL-VPN tunnel node (Go, one binary, two roles: exit + relay), v5 since d236/d241, installed as a package (d073/d077/d120)
+│   ├── main.go                          #   → dispatches the two roles (`-mode exit` tunnel server / `-mode relay`) and the three operator verbs: `keygen`, `public`, `key check` (the store, d236), plus `proxy-env` and `-version`
 │   ├── packaging/                       #   → the deb/rpm writers (pure Go) + termux/ and ol/ format inputs; `out/` is gitignored (docs/d120)
-│   ├── build.mjs                        #   → this folder's own build (d083/d113): go-build probe + target selection (native · image · packages), no root builder; `./node-run.sh estige/build.mjs`
-│   ├── *.go / *_test.go                 #   → egress policy, tunnel transports, relay node, `proxy-env`, VPN end-to-end tests (go test ./...)
-│   ├── lib/                             #   → THIS FOLDER's own copy (d113), now build-only: go-build.mjs, host-capabilities.mjs, log.mjs (no shell, no jq — docs/d120)
-│   ├── README.md                        #   → operations: package install, service units, env-only config, `proxy-env`, build, port model
+│   ├── build.mjs                        #   → this folder's own build (d083/d113): go-build probe + target selection (native · packages), no root builder; `./node-run.sh estige/build.mjs`. The image is Go: `go build .` then `go run build.go` (d236)
+│   ├── *.go / *_test.go                 #   → egress policy, the three tunnel carriers, the inner TLS channel, the role store, the relay node, `proxy-env`, VPN end-to-end tests (go test ./...)
+│   ├── lib/                             #   → THIS FOLDER's own copy (d113), now one module: go-build.mjs (no shell, no jq — docs/d120)
+│   ├── README.md                        #   → operations: package install, service units, the store as the config surface (d236), `proxy-env`, build, port model
 │   └── DESIGN.md                        #   → deployment boundary (binary/supervisor/package), tunnel-transport rationale, 404, error taxonomy
 │
 ├── coding-agent/                        # Bazzite usage (full pi)
@@ -146,7 +146,6 @@ agentcontainer/
 │   ├── settings.json                    #   → static pi settings (generator installs into PI_CODING_AGENT_DIR)
 │   ├── mcp.json                         #   → committed default MCP servers, merged into the agent dir (docs/d061)
 │   ├── config.toml                      #   → mise configuration (includes cline and thinkrail)
-│   ├── Containerfile                    #   → container image build
 │   ├── *.md                             #   → this unit's own living docs (d117): DESIGN, plus coding-harness-persistence (scoped-models-and-proxy-overrides is archived)
 │   ├── lib/                             #   → THIS FOLDER's own copy (d113), the largest: workload-runtime.mjs (the workload_* API in node, no jq on the host), log.mjs, artifact.mjs, canonical-json.mjs, host-capabilities.mjs, cloud-providers.mjs/.json (the full table); the interpreter runners are repo-root (d138)
 │   └── tests/                           #   → this folder's own tests (canonicalization, committed-manifest guard (d050), catalog ordering, URL forms, modality gate, cost map, launcher argv + workload rendering, the jq-free guard)

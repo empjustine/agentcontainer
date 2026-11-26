@@ -18,8 +18,12 @@ auditor checking why the earlier draft's wording no longer binds.
 
 ## Status
 
-Accepted. The inert surface lands first; carrier placement follows it. d169
-stays as the original proposal, and this record wins where the two disagree.
+Accepted and implemented in `estige/`. d169 stays as the original proposal, and
+this record wins where the two disagree. **d241 amends two things here**: the
+windowed-carrier handshake rule binds `h2-post-windowed` only, because
+`h1.1-post-windowed` cannot complete a handshake behind an upgrade-stripping
+gateway and therefore retires; and the container open details below are
+resolved.
 
 ## Audit findings
 
@@ -36,7 +40,7 @@ the old pinned certificate under Go's verifier. Re-mint is a pin change.
 ## Iterations
 
 - The store's `public` row stays the certificate's material. The certificate
-  arrives in its own `E-Pub` header instead of being packed into the envelope,
+  arrives in its own `e-pub` header instead of being packed into the envelope,
   because reverse proxies cap header sizes and a truncated blob would deny
   service to everyone.
 - Role-scoped private keys collapse into one host key at
@@ -61,10 +65,11 @@ the old pinned certificate under Go's verifier. Re-mint is a pin change.
 v5 is the only generation in this implementation. A v3 bearer or any earlier
 wire shape fails closed. No fallback, demotion or downgrade path exists.
 
-Admission is a blind `e-auth` exchange in both directions. The four-segment
+Admission is a blind proof exchange in both directions. The four-segment
 `v2.<name>.<nonce>.<sig>` token and the signed messages
-`estige/v2/relay-to-exit` and `estige/v2/exit-to-relay` keep their bytes. Only
-the header name changes. An `e-auth` failure answers the camouflage 404.
+`estige/v2/relay-to-exit` and `estige/v2/exit-to-relay` keep their bytes. The
+headers are direction-specific — `e-relay-auth` on a request, `e-exit-auth` on
+a response — and an auth failure answers the camouflage 404.
 
 ### Store and key material
 
@@ -97,15 +102,37 @@ library's, with TLS 1.3, disabled tickets, no skip and no callback.
 
 ### Headers and refusal
 
-`E-Pub` carries the sender's whole self-signed certificate as unpadded
-base64url DER. Each request and each response carries exactly one `E-Pub`
-value. Zero values, two or more values, bad encoding, bad certificate shape,
-wrong SAN, non-empty subject, non-Ed25519 key, CA marking, bad validity or a
-bad self-signature all answer the camouflage 404 with no log line.
+The proof pair is direction-specific: a request carries `e-relay-auth`, a
+response carries `e-exit-auth`, and each is the `v2.<name>.<nonce>.<sig>`
+envelope d131 pins. One header per direction means the header set alone says
+which half an exchange holds; the signed label still binds the direction, so a
+proof cannot be reflected. `e-pub` carries the sender's whole self-signed
+certificate as unpadded base64url DER, and each request and each response
+carries exactly one of it. Zero values, two or more values, bad encoding, bad
+certificate shape, wrong SAN, non-empty subject, non-Ed25519 key, CA marking,
+bad validity or a bad self-signature all answer the camouflage 404 with no log
+line.
 
-A valid `E-Pub` that is not in the local trust set also fails the connection.
-It emits the `seen_hosts` event unconditionally, whether the trusted set is
-empty or not. That event is a hint for an operator; it never grants trust.
+Every admission-bearing response also carries `Vary: *` and
+`Cache-Control: no-cache, private`: the proof is bound to one exchange, so an
+intermediary must never reuse or store the response for another request. The
+camouflage 404 stays byte-identical and gains nothing (VPN-R34).
+
+A valid `e-pub` that is not in the local trust set also fails the connection.
+It emits the `seen_hosts` event at most once per distinct peer per one-minute
+window, under a **total budget of 32 events per window**, whether the trusted
+set is empty or not — so an unauthenticated Funnel peer cannot turn a mandated
+hint into a warning amplifier by minting a fresh certificate per request. The
+trade is explicit: a prober that spends the budget mutes hints for the rest of
+that window, and the alternative (an unbounded line per request on a
+Funnel-public path, each carrying ~1.1 KB of attacker-chosen material) is
+worse. That event is a hint for an operator; it never grants trust.
+
+The two refusals are not symmetric, and only one is terminal. The relay's own
+check of the exit's proof stops the dial at the rung it failed on. The exit's
+refusal of the relay's proof is the camouflage 404 — indistinguishable from a
+dead carrier (VPN-R34) — so the relay demotes and fails closed at the last
+rung rather than guessing.
 
 ### Trust events
 
@@ -126,10 +153,12 @@ The blind token runs at the outer HTTP layer. The inner TLS handshake follows
 admission. Every proxied byte rides the inner session, with no payload class
 and no passthrough.
 
-Windowed carriers interrupt sessions in a lossy and unpredictable way. Each
-window therefore carries its own proof and its own TLS handshake. A TLS
-session does not span windows. The non-windowed carriers run one handshake per
-admitted session.
+`h2-post-windowed` interrupts sessions in a lossy and unpredictable way, so
+each window carries its own proof and its own TLS handshake and no TLS session
+spans windows. The non-windowed carriers run one handshake per admitted
+session. `h1.1-post-windowed` cannot honour that rule — a gateway that buffers
+the request body will not deliver the server's flight before the body ends —
+and d241 retires it rather than serve it unprotected.
 
 TLS is silent when idle. An inner keepalive writes `framePing` through the
 `tls.Conn` and answers with `framePong` through it. The raw-stream keepalive
@@ -144,8 +173,8 @@ tunnel is an implementation detail and no address reaches an outside reader.
 ### Carrier vocabulary
 
 The letter modes are historical markers, not names. Documentation and code
-use `h2-post-unbounded`, `websocket`, `h2-post-windowed` and
-`h1.1-post-windowed` from `estige/vocabulary.go`.
+use `h2-post-unbounded`, `websocket` and `h2-post-windowed` from
+`estige/vocabulary.go`. `h1.1-post-windowed` retired with d241.
 
 ### Container tooling
 
@@ -156,14 +185,40 @@ packages that binary into `debian:trixie-slim` with `busybox-static` and
 networking, no restart policy and argv forwarded. Each Go command is a
 standalone file because `go run <file>` compiles that file alone.
 
-### Open details
+### Launcher details (resolved)
 
-The launcher still needs four local choices: the container user and mount
-ownership, the container tool, the image tag, and how env reaches the
-container. None blocks the inert certificate and header work.
+The four local choices this record left open are settled in `estige/build.go`
+and `estige/run.go`:
+
+- **User and mount ownership**: the image runs as uid/gid 65532 and owns only
+  `/var/lib/estige/.local/share`; the store is a bind mount, so the host's
+  ownership and mode 0700 survive (`XDG_DATA_HOME` points into it).
+- **Container tool**: `podman` when present, else `docker`; both are invoked
+  with the same explicit `build` subcommand and the same argument order.
+- **Image tag**: `localhost/estige:<packaging/VERSION>`, overridable with
+  `IMAGE_TAG`.
+- **How env reaches the container**: `--env-file $ESTIGE_ENV_FILE` when set,
+  otherwise explicit `-e` names for the non-secret knobs (`PORT`,
+  `PORT_CLOUDFLARE`, `VPN_CLIENT_LABEL`). No credential has an env spelling to
+  forward, and `XDG_DATA_HOME` is never forwarded: the image pins it to the
+  directory the store is mounted at, so the host's value would point the
+  container at a path it cannot see.
+- **The mount is a state directory, not the store.** `ESTIGE_STATE_DIR` names
+  the HOST directory mounted at `/var/lib/estige`; the store the binary reads
+  is `<state>/.local/share/estige`, and `run.go` prints both paths before
+  starting. Naming it after the store would invite a value one level too deep,
+  which boots into an empty mount.
 
 ## Amendment map
 
+- **A staged pair shares one policy.** Two `exit.json` rows under one name are
+  a key rotation, so `loadExitStore` refuses a pair whose `egress` tables
+  differ (compared by meaning, not spelling): admission trusts both
+  certificates, while a session runs under one table, so differing rows would
+  let row order decide policy.
+- **d241** amends the windowed-carrier handshake rule (it binds
+  `h2-post-windowed` only) and records the `h1.1-post-windowed` retirement; it
+  also carries the fail-closed ladder that follows from it.
 - d169 loses its marker, mixed-pairing, principal-SAN and letter-mode wording
   to this record.
 - d132 retires the role directories in favour of the merged host key.
@@ -171,6 +226,10 @@ container. None blocks the inert certificate and header work.
 - d185's stable-principal SAN finding no longer names the v5 wire name.
 - d211 shares the neutral `estige` wire name with v5.
 - d120 loses the "packages only" claim; container deployment is supported.
+- d132's store grammar is what ships: `relay.json` carries the dial endpoint
+  at top level, `exit.json` carries `egress` beside the admitted relays, and a
+  relay row may carry its own `egress`; every `public` value is the
+  certificate's DER (this record's "Store and key material").
 - d083 keeps the per-unit build entry; its image target moves from Node to Go.
 
 ## Verification
@@ -187,8 +246,11 @@ against the old pin. Go's `crypto/tls` has no heartbeat.
 
 - **A marker header for v5 generation detection.** Mixed pairings do not exist
   when v4 is skipped.
-- **Certificate bytes inside `e-auth`.** A truncated header denies service;
-  the separate `E-Pub` value keeps the envelope's pinned grammar.
+- **Certificate bytes inside the auth envelope.** A truncated header denies
+  service; the separate `e-pub` value keeps the envelope's pinned grammar.
+- **One header for both directions (`e-auth`).** A single name made the reader
+  decode the direction from the payload; `e-relay-auth`/`e-exit-auth` say it on
+  the wire and an auditor sees which half an exchange carries.
 - **A persistent `seen_hosts` file.** Log-only events need no rotation and
   cannot accept a peer by accident.
 - **Principal names in SAN or subject.** The identity is the pinned key; the

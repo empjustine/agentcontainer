@@ -55,6 +55,15 @@ if _go_bin=$(dev_tool_bin go) && _go_ver=$("$_go_bin" version 2>/dev/null); then
 	(
 		cd estige
 		CGO_ENABLED=0 "$_go_bin" test ./...
+		# The container commands carry //go:build ignore because each runs alone
+		# under `go run <file>` (d236), so `go test ./...` never compiles them —
+		# a broken image or launch argv would otherwise surface first for the
+		# operator. Each is compiled separately: they share a package and each
+		# declares main.
+		for cmd in build.go run.go; do
+			CGO_ENABLED=0 "$_go_bin" build -o /dev/null "$cmd" ||
+				log_die 1 "estige/$cmd does not compile" hint="it runs alone: go run $cmd"
+		done
 	)
 else
 	log_warn "skipped — no working go toolchain" hint="./dev-tools.sh go (or the host package manager)"

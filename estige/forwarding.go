@@ -18,7 +18,7 @@ import (
 	"strings"
 )
 
-// maxForwards bounds the listener set the way maxOperatorKeys bounds the
+// maxForwards bounds the listener set the way maxStorePeers bounds the
 // principal set: a structural cap, not a performance one (docs/d144).
 const maxForwards = 32
 
@@ -108,10 +108,10 @@ func parseForwardPort(s string) (uint16, error) {
 // bindForwards binds every listener before serving any: half a forward set
 // is a configuration the operator did not ask for, so a failure closes what
 // was opened and refuses startup.
-func (c *relayNode) bindForwards(ctx context.Context, specs []forwardSpec) ([]net.Listener, error) {
+func (c *relayNode) bindForwards(runCtx context.Context, specs []forwardSpec) ([]net.Listener, error) {
 	listeners := make([]net.Listener, 0, len(specs))
 	for _, spec := range specs {
-		ln, err := new(net.ListenConfig).Listen(ctx, "tcp", spec.listenAddr())
+		ln, err := new(net.ListenConfig).Listen(runCtx, "tcp", spec.listenAddr())
 		if err != nil {
 			for _, opened := range listeners {
 				_ = opened.Close()
@@ -126,20 +126,20 @@ func (c *relayNode) bindForwards(ctx context.Context, specs []forwardSpec) ([]ne
 
 // serveForward accepts until the listener closes; each connection runs the
 // ordinary CONNECT path with the argument's target.
-func (c *relayNode) serveForward(ctx context.Context, ln net.Listener, spec forwardSpec) {
+func (c *relayNode) serveForward(runCtx context.Context, ln net.Listener, spec forwardSpec) {
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
 			return
 		}
-		go c.runForwardConn(ctx, conn, spec)
+		go c.runForwardConn(runCtx, conn, spec)
 	}
 }
 
-func (c *relayNode) runForwardConn(ctx context.Context, conn net.Conn, spec forwardSpec) {
+func (c *relayNode) runForwardConn(runCtx context.Context, conn net.Conn, spec forwardSpec) {
 	defer func() { _ = conn.Close() }()
 	target := spec.target()
-	s, err := c.openTunnel(ctx, target)
+	s, err := c.openTunnel(runCtx, target)
 	if err != nil {
 		// A forward whose tunnel cannot open reports through the records,
 		// never through a direct dial (VPN-R26, docs/d144).
