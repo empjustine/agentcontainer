@@ -266,21 +266,22 @@ The store is read and validated **once at boot**; the admitted sets load
 into memory. Verification is then symmetric on both nodes and has bounded,
 constant cost:
 
-- **Each node scans its admitted set's names — constant-time per row, over
-  every row, no early exit** (VPN-R33's discipline, kept): the exit scans
-  `exit.json`'s `relays` entries; the relay scans `relay.json`'s ≤2
-  `exit` entries. Every name is compared full-width, and the scan visits
-  all rows whether or not one matched, so neither the matched principal's
-  position nor the set's contents leak through timing. Nanoseconds per row
-  against the bounded-set cap (32, carried over) — a lookup, not the
-  credential check.
+- **Each node looks its peer up by name in a map built at boot.** The exit
+  indexes `exit.json`'s `relays` entries and a relay indexes `relay.json`'s
+  `exit` rows (≤2, cap 32 carried over) into a name → pinned-certificate(s)
+  map, so the lookup is one hash probe: its cost does not depend on the set's
+  size, and it gives a prober nothing to measure — no per-row work means no
+  matched-position signal. This is VPN-R33's discipline satisfied
+  structurally rather than by a full-width scan: the earlier linear
+  compare-every-row shape existed to keep a linear scan from leaking, and a
+  map keyed by the presented name has nothing to leak. The work is one
+  lookup, not the credential check.
 - **Exactly one Ed25519 verify is computed per proof** — the matched
   public key's signature check, full-width by the primitive. No match
   means no verify: that request answers the camouflage 404 having paid
-  one scan. The whole cost argument: authentication is O(rows) byte
-  compares plus a single verify, independent of set size and of which
-  name was presented — a fifty-relay exit pays what a one-relay exit
-  pays. The verify itself costs ~30–80µs (vs. a MAC's sub-microsecond):
+  one lookup. The whole cost argument: authentication is O(1) map work plus
+  a single verify, independent of set size and of which name was presented —
+  a fifty-relay exit pays what a one-relay exit pays. The verify itself costs ~30–80µs (vs. a MAC's sub-microsecond):
   negligible at handshake rates, a few percent of a core at a few hundred
   per-request authentications per second (modes C/E) — recorded in the
   consequences with its DoS arithmetic.

@@ -117,12 +117,14 @@ consequences, and the alternatives rejected.
   `X-Exit-Proof`, each `v2.<own-key-name>.<nonce>.<sig>` — the minter's
   security principal key name and single-use nonce included, never a
   bearer.
-- **VPN-R33 (unchanged, applied)** — both admitted-set name scans are
-  full-width constant-time over every row with no early exit; signature
-  comparison is the primitive's own full-width check; signatures, seeds,
-  and PEM/DER material are log-forbidden like every credential; key
-  names, fingerprints, and nonces are log-safe labels (d078's id sense —
-  a nonce is wire-public single-use data, not a secret).
+- **VPN-R33 (unchanged, applied)** — a name lookup costs the same work
+  whoever asks and whatever the set holds (v5 satisfies it with a
+  boot-built name → certificate map, so there is no per-row work to leak;
+  d131's cost section owns that shape); signature comparison is the
+  primitive's own full-width check; signatures, seeds, and PEM/DER material
+  are log-forbidden like every credential; key names, fingerprints, and
+  nonces are log-safe labels (d078's id sense — a nonce is wire-public
+  single-use data, not a secret).
 - **VPN-R34 (unchanged, applied)** — proof failures, unknown names,
   direction swaps, and replayed nonces answer the camouflage 404,
   byte-identical to the allowlist relay's garbage response.

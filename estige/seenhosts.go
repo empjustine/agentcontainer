@@ -30,6 +30,16 @@ var seenHostRecent = struct {
 	last map[string]time.Time
 }{last: make(map[string]time.Time, seenHostCap)}
 
+// resetSeenHosts forgets the window. It exists for tests that assert the hint
+// IS emitted: the cache is process-global, so a repeat run of the same test
+// (go test -count=2) would otherwise still see its own first emission and the
+// mandated-hint assertion could never be repeated.
+func resetSeenHosts() {
+	seenHostRecent.mu.Lock()
+	defer seenHostRecent.mu.Unlock()
+	seenHostRecent.last = make(map[string]time.Time, seenHostCap)
+}
+
 // seenHostSuppressed reports whether this peer's hint was already logged
 // within the window, recording it when it was not.
 func seenHostSuppressed(role, name, public string) bool {
@@ -41,13 +51,23 @@ func seenHostSuppressed(role, name, public string) bool {
 		return true
 	}
 	if len(seenHostRecent.last) >= seenHostCap {
+		// The table is a bound on memory, not a licence to go silent: a
+		// prober minting fresh certificates could otherwise fill it and
+		// silence the genuine hint for the rest of the window. Drop expired
+		// entries first, then evict the OLDEST so the newcomer still logs.
 		for seenKey, at := range seenHostRecent.last {
 			if now.Sub(at) >= seenHostWindow {
 				delete(seenHostRecent.last, seenKey)
 			}
 		}
-		if len(seenHostRecent.last) >= seenHostCap {
-			return true
+		for len(seenHostRecent.last) >= seenHostCap {
+			oldestKey, oldest := "", now
+			for seenKey, at := range seenHostRecent.last {
+				if oldestKey == "" || at.Before(oldest) {
+					oldestKey, oldest = seenKey, at
+				}
+			}
+			delete(seenHostRecent.last, oldestKey)
 		}
 	}
 	seenHostRecent.last[key] = now

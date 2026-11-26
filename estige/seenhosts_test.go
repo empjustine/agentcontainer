@@ -21,6 +21,7 @@ func (s *seenCapture) emit(se severity, text string, fields []journalField) {
 
 func captureSeen(t *testing.T) *seenCapture {
 	t.Helper()
+	resetSeenHosts()
 	capture := &seenCapture{}
 	prev := activeSink
 	activeSink = capture
@@ -147,5 +148,25 @@ func TestSeenHostIsThrottled(t *testing.T) {
 	}
 	if !strings.Contains(capture.text, "relay_bazzite") {
 		t.Fatal("an expired hint was not re-emitted")
+	}
+}
+
+// TestSeenHostFullTableStillLogs: the cap bounds memory, not the hint. A
+// prober minting more distinct certificates than the table holds must not be
+// able to silence the next genuine hint — the oldest entry makes room.
+func TestSeenHostFullTableStillLogs(t *testing.T) {
+	capture := captureSeen(t)
+	for range seenHostCap {
+		if err := logSeenHost(roleExit, "", "relay_filler", seenCert(t)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	capture.text = ""
+	genuine := seenCert(t)
+	if err := logSeenHost(roleExit, "", "relay_genuine", genuine); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(capture.text, "relay_genuine") {
+		t.Fatal("a full table swallowed the genuine hint")
 	}
 }

@@ -216,6 +216,10 @@ func TestWrongExitPinStopsTheLadder(t *testing.T) {
 		exitAddr, tunnelPath, testV5Principal, encodeEPub(foreignDER))
 	writeTestRoleFile(t, "relay.json", relayFile)
 	logBuf := captureLog(t)
+	// The hint's dedupe window is process-global, so a repeat run
+	// (go test -count=2) must start it empty for this assertion to mean
+	// anything.
+	resetSeenHosts()
 	httpAddr := freeLoopbackAddr(t)
 	cfg, err := relayConfigFromEnv(httpAddr, freeLoopbackAddr(t), relaySelection{}, false, false)
 	if err != nil {
