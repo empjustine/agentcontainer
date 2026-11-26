@@ -87,10 +87,11 @@ type relayConfig struct {
 	proxyAddr string      // HTTP CONNECT listener (must be loopback, VPN-R23)
 	socksAddr string      // SOCKS5 listener (must be loopback, VPN-R23)
 	chain     *chainProxy // optional upstream chain for the tunnel leg (docs/d094)
-	// legacyIPRelay is the relay half of the IP-exit switch (d163): off,
-	// every address target dies at the local doors before a tunnel exists;
-	// on, the address is handed over and the exit's verdict answers.
-	legacyIPRelay bool
+	// refuseIPTargets is the relay's strict door (d242): off by default, so an
+	// address target passes to the exit's policy; on, the address form is
+	// refused at the door before a tunnel exists. The guaranteed-bogon
+	// refusal answers first either way.
+	refuseIPTargets bool
 	// insecureExit is docs/d171's one switch for both degraded relay->exit
 	// postures: skip certificate verification and accept a cleartext
 	// tunnel URL. Off means https/wss verifies and ws:// is refused at
@@ -125,11 +126,11 @@ const (
 // to the canonical ws/wss every carrier branches on, docs/d090 §1); the
 // environment contributes only the optional log label.
 //
-// legacyIPRelay rides as a parameter rather than the environment because it
+// refuseIPTargets rides as a parameter rather than the environment because it
 // is argv — the same side of the ledger as d145's relay-side flags, and a
 // switch this load-bearing must be visible in the process's own command
 // line (d163).
-func relayConfigFromEnv(proxyAddr, socksAddr string, selection relaySelection, legacyIPRelay, insecureExit bool) (relayConfig, error) {
+func relayConfigFromEnv(proxyAddr, socksAddr string, selection relaySelection, refuseIPTargets, insecureExit bool) (relayConfig, error) {
 	var cfg relayConfig
 	root, err := storeRoot()
 	if err != nil {
@@ -162,7 +163,7 @@ func relayConfigFromEnv(proxyAddr, socksAddr string, selection relaySelection, l
 	cfg.label = os.Getenv(envClientLabel)
 	cfg.proxyAddr = proxyAddr
 	cfg.socksAddr = socksAddr
-	cfg.legacyIPRelay = legacyIPRelay
+	cfg.refuseIPTargets = refuseIPTargets
 	cfg.insecureExit = insecureExit
 	// docs/d171: a cleartext tunnel leg is a degraded posture, legal only
 	// under the switch. Refusing here — before any bind — is VPN-R26's
@@ -778,13 +779,13 @@ func (c *relayNode) handleHealth(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-// localTargetRefusal is the relay's own target gate (d163): what it refuses
-// itself, before a tunnel exists, and the SOCKS reply byte that refusal is
-// worth. ("", 0) means the target may be handed to the tunnel, where the
-// exit's verdict answers the rest. The codes keep their meanings: 0x02 is a
-// refusal no switch re-enables — the guarantee answers first here exactly as
-// it does at the exit — and 0x08 is VPN-R22's byte-identical refusal of the
-// address form that -legacy-ip-relay could admit.
+// localTargetRefusal is the relay's own target gate (d163/d242): what it
+// refuses itself, before a tunnel exists, and the SOCKS reply byte that
+// refusal is worth. ("", 0) means the target may be handed to the tunnel,
+// where the exit's policy answers the rest. The codes keep their meanings:
+// 0x02 is a refusal no switch re-enables — the guarantee answers first here
+// exactly as it does at the exit — and 0x08 is the address form's refusal
+// under -refuse-ip-targets, the opt-in strict door.
 func (c *relayNode) localTargetRefusal(host string) (detail string, socksRep byte) {
 	if isBogonName(host) {
 		return "target " + host + " is a guaranteed-refused name (localhost and .localhost, d163)", 0x02
@@ -793,8 +794,8 @@ func (c *relayNode) localTargetRefusal(host string) (detail string, socksRep byt
 		if isGuaranteedBogon(addr) {
 			return "target " + addr.String() + " is a guaranteed-bogon address (d163)", 0x02
 		}
-		if !c.cfg.legacyIPRelay {
-			return "this relay does not relay address targets (start it with -legacy-ip-relay, d163)", 0x08
+		if c.cfg.refuseIPTargets {
+			return "this relay refuses address targets by configuration (-refuse-ip-targets, d242)", 0x08
 		}
 	}
 	return "", 0
@@ -921,9 +922,9 @@ func (c *relayNode) serveSOCKS(runCtx context.Context, ln net.Listener) {
 // handleSOCKS speaks just enough RFC 1928: no-auth greeting (the listener
 // is loopback-only, VPN-R23 — a credential check here would be theater),
 // CONNECT command, domain or IP address types. Domain names pass through
-// unresolved; every other target answers at localTargetRefusal (d163) —
-// address targets keep VPN-R22's byte-identical 0x08 default until
-// -legacy-ip-relay says otherwise, and guaranteed refusals answer first.
+// unresolved; an address target is dialed like one unless
+// -refuse-ip-targets turns the strict door on, and the guaranteed refusals
+// answer first either way (localTargetRefusal, d163/d242).
 func (c *relayNode) handleSOCKS(connCtx context.Context, conn net.Conn) {
 	defer func() { _ = conn.Close() }()
 	_ = conn.SetDeadline(time.Now().Add(socksHandshakeTimeout))

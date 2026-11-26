@@ -230,7 +230,7 @@ The keyset value is either the token string it always was, or an object:
 - A **string** value inherits the process table from VPN_TUNNEL_EGRESS.
   Existing env files need no edit, and an object is never required.
 - An **object** value requires token and may carry egress, whose members are
-  egressConfig's (allowCidrs, ports, allowIPLiterals).
+  egressConfig's (denyCidrs, allowCidrs, ports, refuseIPLiterals).
 - A per-key table is built by the same newEgressPolicy as the process table,
   so the default-deny set and the CIDR/port checks cannot diverge between
   the two. It can widen the defaults only the way the process table can — by

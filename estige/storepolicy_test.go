@@ -57,17 +57,20 @@ func TestPerRelayEgressIsEnforced(t *testing.T) {
 	}
 }
 
-func TestEgressDefaultsDenyWithoutARowTable(t *testing.T) {
+// d242: with no reservation the loopback-resolving alias reaches the dial
+// path — the default is "route IP traffic", and a reserved range is the
+// operator's opt-in. The per-row test shows the reservation half.
+func TestEgressDefaultAdmitsWithoutARowTable(t *testing.T) {
 	writeTestExitJSON(t, nil)
 	s := &server{}
 	if err := s.enableTunnel(); err != nil {
 		t.Fatal(err)
 	}
 	u := mustTunnelURL(t, newHTTPServer(t, s))
-	// Loopback is in the default-deny table, so the exit refuses before any
-	// dial (VPN-R35) — the same verdict the per-row test reverses.
-	if typ, reason := connectReply(t, u, net.JoinHostPort(testTargetAlias, "443")); typ != frameConnectErr || reason != errReasonDenied {
-		t.Fatalf("default table let a loopback target through: typ=%d reason=%q", typ, reason)
+	// 443 is in the default port set, so a dial is attempted: the refusal
+	// that proves admission is the dial's, not the address table's.
+	if typ, reason := connectReply(t, u, net.JoinHostPort(testTargetAlias, "443")); typ != frameConnectErr || reason != errReasonDial {
+		t.Fatalf("default posture did not admit the target: typ=%d reason=%q", typ, reason)
 	}
 }
 

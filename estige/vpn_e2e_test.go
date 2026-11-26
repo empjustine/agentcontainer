@@ -10,6 +10,7 @@ import (
 	"bufio"
 	"context"
 	"io"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -178,12 +179,11 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 		}
 	})
 
-	t.Run("SOCKS5 refuses a literal-IP target, so the spelling must stay socks5h (d130)", func(t *testing.T) {
-		// The other half of docs/d130: `ALL_PROXY=socks5://…` makes a client
-		// resolve the name itself and send this ATYP=IPv4/6 form, which the
-		// listener refuses because the exit node owns resolution and pinning
-		// (VPN-R22). The spelling and this refusal are one contract — a
-		// socks5:// value exported by proxy-env breaks every hostname target.
+	t.Run("SOCKS5 carries a literal-IP target to the exit's policy (d242, d130)", func(t *testing.T) {
+		// d242 changed the door: an ATYP=IPv4/6 target is no longer refused
+		// as a form, so a client that resolved the name itself works. The
+		// exit's policy still answers it — here the port set, which refuses
+		// before any dial.
 		conn := rawDial(t, socksAddr)
 		defer conn.Close()
 
@@ -193,17 +193,17 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 			t.Fatalf("greeting reply %v err=%v", greet, err)
 		}
 
-		// A non-guaranteed literal: the guaranteed-bogon spellings answer
-		// with 0x02 at this door (d163), while the address FORM this test
-		// pins stays VPN-R22's 0x08 refusal.
-		req := []byte{socksVersion, 1, 0, 1, 1, 2, 3, 4, byte(upPort >> 8), byte(upPort)}
+		// A non-guaranteed literal on a port the exit does not allow: the
+		// guaranteed-bogon spellings answer 0x02 at the door (d163), and this
+		// address answers 0x02 from the tunnel's ruleset refusal.
+		req := []byte{socksVersion, 1, 0, 1, 1, 2, 3, 4, 0x00, 0x01}
 		mustWrite(t, conn, string(req))
 		reply := make([]byte, 10)
 		if _, err := io.ReadFull(conn, reply); err != nil {
 			t.Fatalf("socks reply: %v", err)
 		}
-		if reply[1] != 0x08 {
-			t.Fatalf("literal target refused with rep=%#x, want 0x08 (address type not supported, VPN-R22)", reply[1])
+		if reply[1] != 0x02 {
+			t.Fatalf("literal target answered rep=%#x, want 0x02 (the exit's ruleset refusal)", reply[1])
 		}
 	})
 
@@ -287,26 +287,25 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 		}
 	})
 
-	t.Run("IP-literal absolute-form target is refused at the relay without -legacy-ip-relay (d163)", func(t *testing.T) {
-		// Flag-off half of d163: an address target never reaches the
-		// tunnel — the relay answers locally in its own vocabulary and no
-		// exit session is spent on a target the switch never claimed. The
-		// flag-on half (the target passing the door and dying at the
-		// exit's VPN-R22 gate) is TestRelayLegacyIPRelaySwitch.
+	t.Run("an address target passes the door by default and the exit answers (d242)", func(t *testing.T) {
+		// d242: the door no longer refuses the address form, so a literal
+		// travels and the exit's policy answers. A reserved range here makes
+		// the answer deterministic without a dial into private space.
 		conn := rawDial(t, httpAddr)
 		defer conn.Close()
-		// A non-guaranteed literal: the guaranteed-bogon spellings are the
-		// other refusal (d163's guarantee-first answer, covered below), and
-		// this subtest isolates the flag's own branch.
-		addr := "203.0.113.9:" + strconv.Itoa(int(upPort))
+		// Port 1 is outside this fixture's exit port set, so the exit refuses
+		// without a dial and the answer is deterministic and hermetic.
+		addr := "203.0.113.9:1"
 		mustWrite(t, conn, "GET http://"+addr+"/fwd HTTP/1.1\r\nHost: "+addr+"\r\nConnection: close\r\n\r\n")
 		resp := readHTTPResponse(t, bufio.NewReader(conn))
 		defer resp.Body.Close()
 		body, _ := io.ReadAll(resp.Body)
-		if resp.StatusCode != http.StatusForbidden || !strings.Contains(string(body), "target-refused") || !strings.Contains(string(body), "-legacy-ip-relay") {
-			t.Fatalf("the relay must refuse address targets locally: status=%d body=%q", resp.StatusCode, body)
+		// The exit reached policy and refused on the port set (its target
+		// port is not in the table): the local door's "target-refused"
+		// vocabulary is gone, which is the whole change.
+		if strings.Contains(string(body), "target-refused") || !strings.Contains(string(body), "tunnel-denied") {
+			t.Fatalf("the exit must answer an address target: status=%d body=%q", resp.StatusCode, body)
 		}
-		waitForLog(t, logBuf, "reason=target-bogon")
 	})
 
 	t.Run("absolute-form https:// still rides CONNECT (405, bytes unopened)", func(t *testing.T) {
@@ -443,23 +442,22 @@ func TestCleartextForwardFailsClosedWithoutTunnel(t *testing.T) {
 	}
 }
 
-// TestRelayLegacyIPRelaySwitch: -legacy-ip-relay (d163) is the only thing
-// that lets an address target past the relay's door, it is off by default,
-// and turning it on changes nothing about the guaranteed refusals or the
-// exit's own gate — it only decides WHICH side answers a plain address.
-func TestRelayLegacyIPRelaySwitch(t *testing.T) {
-	// The exit stays at its defaults: no IP-exit switch, so a target that
-	// passes the relay must still die at the exit's VPN-R22 gate.
-	s := newTunnelServer(t, true, egressConfig{})
+// TestRelayRefuseIPTargetsSwitch: an address target passes the relay's door
+// by default (d242) and the exit's policy answers it; -refuse-ip-targets is
+// the opt-in strict door, and neither state changes the guaranteed refusals.
+func TestRelayRefuseIPTargetsSwitch(t *testing.T) {
+	// The exit reserves the documentation range, so a target that passes the
+	// relay dies at the exit's reservation with a deterministic token.
+	s := newTunnelServer(t, true, egressConfig{DenyCidrs: []string{"203.0.113.0/24"}, Ports: []uint16{443}})
 	proxy := newHTTPSServer(t, s)
 	writeTestRelayJSON(t, "wss://"+proxy.Listener.Addr().String()+tunnelPath)
-	t.Setenv(envClientLabel, "legacy-ip")
+	t.Setenv(envClientLabel, "refuse-ip")
 
-	startRelay := func(t *testing.T, legacyIPRelay bool) (string, string, func()) {
+	startRelay := func(t *testing.T, refuseIPTargets bool) (string, string, func()) {
 		t.Helper()
 		httpAddr := freeLoopbackAddr(t)
 		socksAddr := freeLoopbackAddr(t)
-		cfg, err := relayConfigFromEnv(httpAddr, socksAddr, relaySelection{}, legacyIPRelay, false)
+		cfg, err := relayConfigFromEnv(httpAddr, socksAddr, relaySelection{}, refuseIPTargets, false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -498,9 +496,15 @@ func TestRelayLegacyIPRelaySwitch(t *testing.T) {
 		return resp.StatusCode, string(body)
 	}
 
-	// socksReply drives one ATYP=IPv4 connect to :443 and returns the
-	// reply byte — the vocabulary split d163 keeps byte-identical.
-	socksReply := func(t *testing.T, socksAddr string) byte {
+	// socksReply drives one ATYP=IPv4 connect to target:443 and returns the
+	// reply byte — the vocabulary split d163 keeps byte-identical. The
+	// address is the fixture's reserved one, so a passing door answers at the
+	// exit's policy instead of dialing the documentation range.
+	socksReply := func(t *testing.T, socksAddr, addr string) byte {
+		ip := net.ParseIP(addr).To4()
+		if ip == nil {
+			t.Fatalf("%q is not an IPv4 literal", addr)
+		}
 		t.Helper()
 		conn := rawDial(t, socksAddr)
 		defer conn.Close()
@@ -509,7 +513,8 @@ func TestRelayLegacyIPRelaySwitch(t *testing.T) {
 		if _, err := io.ReadFull(conn, greet); err != nil || greet[1] != socksNoAuth {
 			t.Fatalf("greeting reply %v err=%v", greet, err)
 		}
-		mustWrite(t, conn, string([]byte{socksVersion, 1, 0, 1, 1, 2, 3, 4, 0x01, 0xbb}))
+		req := append([]byte{socksVersion, 1, 0, 1}, ip...)
+		mustWrite(t, conn, string(append(req, 0x01, 0xbb)))
 		reply := make([]byte, 10)
 		if _, err := io.ReadFull(conn, reply); err != nil {
 			t.Fatalf("socks reply: %v", err)
@@ -517,43 +522,41 @@ func TestRelayLegacyIPRelaySwitch(t *testing.T) {
 		return reply[1]
 	}
 
-	t.Run("flag off: the relay answers address targets itself", func(t *testing.T) {
+	t.Run("default: the target passes the door and the exit's policy answers", func(t *testing.T) {
 		httpAddr, socksAddr, stop := startRelay(t, false)
 		defer stop()
-		code, body := connect(t, httpAddr, "1.2.3.4:443")
-		if code != http.StatusForbidden || !strings.Contains(body, "target-refused") || !strings.Contains(body, "-legacy-ip-relay") {
-			t.Fatalf("status=%d body=%q", code, body)
+		code, body := connect(t, httpAddr, "203.0.113.9:443")
+		if code != http.StatusForbidden || !strings.Contains(body, "tunnel-denied") {
+			t.Fatalf("the exit's policy must answer: status=%d body=%q", code, body)
 		}
-
-		if rep := socksReply(t, socksAddr); rep != 0x08 {
-			t.Fatalf("socks address target rep=%#x, want 0x08 (VPN-R22's byte, unchanged)", rep)
-		}
-	})
-
-	t.Run("flag on: the target passes the relay and the exit's gate answers", func(t *testing.T) {
-		httpAddr, socksAddr, stop := startRelay(t, true)
-		defer stop()
-		code, body := connect(t, httpAddr, "1.2.3.4:443")
-		if code != http.StatusForbidden || !strings.Contains(body, "target-ip-literal") {
-			t.Fatalf("the exit's VPN-R22 verdict must answer: status=%d body=%q", code, body)
-		}
-		// The same verdict in SOCKS vocabulary: 0x02, the tunnel's
-		// ruleset refusal — not 0x08, which only the door answers with.
-		if rep := socksReply(t, socksAddr); rep != 0x02 {
+		// The same verdict in SOCKS vocabulary: 0x02, the tunnel's ruleset
+		// refusal — not 0x08, which is the door's own byte.
+		if rep := socksReply(t, socksAddr, "203.0.113.9"); rep != 0x02 {
 			t.Fatalf("socks address target rep=%#x, want the exit's 0x02", rep)
 		}
 	})
 
-	t.Run("the flag never opens the guaranteed refusals", func(t *testing.T) {
-		// Both flag states: the guarantee answers first at this door, so
-		// even the flag-off refusal of a bogon address reads
-		// guaranteed-bogon, not the switch's hint.
-		for _, legacyIPRelay := range []bool{false, true} {
-			httpAddr, _, stop := startRelay(t, legacyIPRelay)
+	t.Run("-refuse-ip-targets: the relay answers address targets itself", func(t *testing.T) {
+		httpAddr, socksAddr, stop := startRelay(t, true)
+		defer stop()
+		code, body := connect(t, httpAddr, "203.0.113.9:443")
+		if code != http.StatusForbidden || !strings.Contains(body, "target-refused") || !strings.Contains(body, "-refuse-ip-targets") {
+			t.Fatalf("status=%d body=%q", code, body)
+		}
+		if rep := socksReply(t, socksAddr, "203.0.113.9"); rep != 0x08 {
+			t.Fatalf("socks address target rep=%#x, want the strict door's 0x08", rep)
+		}
+	})
+
+	t.Run("neither state opens the guaranteed refusals", func(t *testing.T) {
+		// The guarantee answers first at this door, so the refusal of a bogon
+		// address reads guaranteed-bogon under either posture.
+		for _, refuseIPTargets := range []bool{false, true} {
+			httpAddr, _, stop := startRelay(t, refuseIPTargets)
 			for _, target := range []string{"127.0.0.1:443", "localhost:443", "localhost4.localdomain4:443"} {
 				code, body := connect(t, httpAddr, target)
 				if code != http.StatusForbidden || !strings.Contains(body, "target-refused") || !strings.Contains(body, "guaranteed-") {
-					t.Fatalf("legacy-ip-relay=%v %s: status=%d body=%q", legacyIPRelay, target, code, body)
+					t.Fatalf("refuse-ip-targets=%v %s: status=%d body=%q", refuseIPTargets, target, code, body)
 				}
 			}
 			stop()

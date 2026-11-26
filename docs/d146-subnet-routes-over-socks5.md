@@ -32,8 +32,9 @@ dials.
 and match rule, so the implementing change names both records, and it
 restates VPN-R22 on d073 under Requirement deltas. One code-level change
 belongs here too: the relay's own IP-literal refusal at its proxy doors
-relaxes to pass-through, noted under Decision — as d163 records, the
-relaxation ships opt-in behind `-legacy-ip-relay`, not as the default.
+relaxes to pass-through, noted under Decision — d242 now ships that
+pass-through as the default (`-refuse-ip-targets` is the opt-in strict
+door), so this record's relay half needs no flag.
 d132 takes no delta —
 routes land in no config file at either end; a relay's claim seed is
 d145's argv decision, `CLAIMS` frames mutate the live set, and routes
@@ -102,10 +103,10 @@ pass-through. The relay never dials an address out of a request — it
 dials only what its own claims authorize — and the match can only happen
 where the claims live. Named targets are unaffected.
 
-d163 narrows this decision: the pass-through is opt-in behind the
-relay's `-legacy-ip-relay` flag, so a relay started without it keeps
-byte-identical refusal, and the guaranteed refusals answer first either
-way.
+d163 narrowed this decision to an opt-in behind the relay's
+`-legacy-ip-relay` flag; d242 reversed that default, so the pass-through is
+what a relay does unless `-refuse-ip-targets` asks for the strict door. The
+guaranteed refusals answer first either way.
 
 ### The match rule extends d145's targeting
 
@@ -123,10 +124,10 @@ host is an IP literal:
    refusal beats a tie-break nobody asked for.
 4. The port must be on the winning route's list; otherwise the target
    falls through to refusal, never to the egress path.
-5. No match means today's IP-literal refusal, byte-for-byte — VPN-R22's
-   outcome for everything outside a live claim. d163 narrows it: with
-   the exit's `allowIPLiterals` switch set, an unclaimed literal falls
-   through to the exit's own gates instead, guarantee first.
+5. No match falls through to the exit's own gates, guarantee first (d242:
+   that is the default posture now — an unclaimed literal is an ordinary
+   address target). A relay run with `-refuse-ip-targets` keeps its
+   byte-identical door refusal instead.
 
 A match then runs the decided part of d145's bridge: `EVENT` through
 the ACCEPT pipe, the relay's re-check of its current claims, `DECLINE`
@@ -184,9 +185,8 @@ unchanged and the checks relocate:
   did not check it, and resolution happens at exactly one point.
 - **Relay side (pass-through):** the relay stops refusing IP literals at
   its proxy doors, because it never dials them — its refusal was an early
-  rejection for a path that now leads somewhere real. d163 keeps that
-  pass-through opt-in behind `-legacy-ip-relay`, so the byte-identical
-  refusal remains the default.
+  rejection for a path that now leads somewhere real. That is the default
+  since d242; `-refuse-ip-targets` is the opt-in strict door.
 - **Rendezvous side (match-then-refuse):** IP literals are matched
   against live claims and refused byte-identically otherwise; the exit
   dials nothing in either case.

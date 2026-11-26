@@ -28,9 +28,9 @@ re-enable.
 ## Status
 
 In force: `estige/` implements every rule below — `targetVerdict` and
-`localTargetRefusal` are the two gates, `-legacy-ip-relay` and the
-`allowIPLiterals` config field are the two switches — and the Go suite pins
-each refusal path. The record amends two decisions it depends on: [d146](d146-subnet-routes-over-socks5.md)
+`localTargetRefusal` are the two gates, and the switches are now the
+opt-in `-refuse-ip-targets` (relay) and `refuseIPLiterals` (exit egress) since
+d242 — and the Go suite pins each refusal path. The record amends two decisions it depends on: [d146](d146-subnet-routes-over-socks5.md)
 relaxes the relay's IP-literal refusal to pass-through, and this record makes
 that relaxation opt-in; VPN-R22 and VPN-R35 on [d073](archive/d073-ssl-vpn-three-modes.md)
 read as unconditional denials, and the Requirement deltas section below
@@ -107,16 +107,17 @@ documentation ranges are possible bogons a real network does allocate and
 stay with the pinhole review, while space that can never answer a connection
 does not.
 
-### Address targets are opt-in at each door
+### Address targets are the default (reversed by d242)
 
-Default stays VPN-R22's refusal: the relay refuses an address target —
-`0x08`/403 for the address form, `0x02`/403 for a guaranteed-bogon spelling,
-which answers first — and the exit's gate answers `target-ip-literal`.
-Two switches relax it, one per process owner: `-legacy-ip-relay` (argv at
-relay startup) passes an address from the relay's doors to the exit's gate,
-and `allowIPLiterals` (a `VPN_TUNNEL_EGRESS` field) admits an address to
-the exit's dial path. A relay client's address target needs both switches set
-to be dialed; each switch alone moves the refusal one gate further along.
+**Superseded:** this section's "opt-in at each door" is reversed by d242. An
+address target now passes both doors by default — a VPN carries IP traffic —
+in the guarantee-first order this record established: `0x02`/`target-bogon`
+for the guaranteed set, then the exit's reservation table, then the port set.
+The switches inverted with it: `-refuse-ip-targets` is the opt-in strict door
+at the relay, and `refuseIPLiterals` (the store's egress field) restores the
+form-level refusal at the exit. What this record settled and d242 keeps: the
+guarantee answers before any switch, the two doors keep distinct vocabularies,
+and no allow list re-enables a guaranteed target.
 
 The pass beyond that is implicit rather than claimed: an address the
 guarantee does not refuse reaches the exit's own gates — the port set, then
@@ -143,27 +144,28 @@ that setting, and nothing else may open the session.
 
 ### VPN-R22 restated
 
-The relay refuses an address target at its doors — `0x08`/403 for an
-address the guarantee has no claim on, byte-identical to
-[d130](d130-chain-step-spelling-contract.md)'s contract, with a
-guaranteed-bogon spelling answering `0x02` first — and passes it through
-only when `-legacy-ip-relay` is set; the exit's gate refuses it until
-`allowIPLiterals` is set. A guaranteed-bogon target dies at either door
-regardless of both, by address or by a localhost-family name, so no path
-dials an unchecked address and no path queries a name the network cannot
-answer for.
-Resolution and pinning stay exit-side: a relay client that resolves locally
-performs the legacy behavior, and the door refuses it rather than
-accommodating it.
+**Superseded by d242** (kept as the d163 reading): an address target passes
+both doors and the exit's policy answers it, because a VPN carries IP traffic.
+The guarantee still answers first at either door — `0x02`/`target-bogon` by
+address or by a localhost-family name — so no path dials a guaranteed-bogon
+target and no path queries a name the network cannot answer for. The strict
+door is the opt-in `-refuse-ip-targets` (`0x08`/403 `target-refused`), and the
+exit's form-level switch is `refuseIPLiterals`.
+Resolution and pinning stay exit-side for **names**: a name is still what gives
+the exit the resolution it validates and pins (VPN-R36), which is why
+`proxy-env` keeps exporting `socks5h`. A client that resolved locally is no
+longer refused; its literal is an ordinary target from d242 onward.
 
 ### VPN-R35 restated
 
-The default-deny table stands for every possible bogon — RFC 1918,
-link-local, metadata, documentation space — with operator allow entries
-winning over it as before. The guaranteed subset is carved out of that
-permission: loopback, this-network, limited broadcast, multicast,
-unspecified, the v4-mapped block and discard-only space are refused before
-the table is consulted, and an allowed CIDR cannot reach them.
+**Superseded by d242** (kept as the d163 reading): the default-deny table
+stands for every possible bogon with operator allow entries winning over it.
+Since d242 the table is EMPTY by default — private and link-local space is an
+ordinary destination — so the guarantee is the whole default refusal: loopback,
+this-network, limited broadcast, multicast, unspecified, the v4-mapped block
+and discard-only space are refused before any table is consulted, and neither an
+allow CIDR nor a switch can reach them. An operator's `denyCidrs` reservation is
+the table's replacement, with `allowCidrs` its exception list.
 
 ### VPN-R36 restated
 
@@ -176,12 +178,13 @@ lookups instead of adding a second resolution point.
 
 - `target-bogon` joins the tunnel's stable reason vocabulary, and the relay's
   problem type `target-refused` carries the detail. The SOCKS split — `0x08`
-  for the switch's reach, `0x02` for the guarantee's — keeps
-  [d130](d130-chain-step-spelling-contract.md)'s byte-identical default for
-  address targets outside the guarantee.
+  for the strict door's reach, `0x02` for the guarantee's — keeps each
+  refusal's byte stable; since d242 the `0x08` half is what an operator opts
+  into rather than the default.
 - The relay switch is argv, not environment: the same side of the ledger as
   [d145](d145-relay-remote-port-forwarding.md)'s relay-side flags, visible in
-  the process command line.
+  the process command line. d242 inverted its sense, so the posture a `ps`
+  shows is now the non-default one.
 - The guarantee stays code rather than configuration, because the point of it
   is what an operator setting must not buy back. A bad CIDR entry panics at
   load instead of mis-verdicting at some later dial.

@@ -271,34 +271,45 @@ func connectErrReason(t *testing.T, ws tunnelStream, target string) string {
 	return string(payload)
 }
 
-// VPN-R22: the exit node refuses pre-resolved targets — the enforcement point
-// must hold even against a peer that skips any client-side courtesy check.
-// A guaranteed-bogon address is refused earlier and separately (d163), so
-// the loopback spellings live in TestServerGuaranteedRefusalsAnswerFirst.
-func TestServerRefusesIPLiteralTargets(t *testing.T) {
-	s := newTunnelServer(t, true, egressConfig{})
-	proxy := newHTTPServer(t, s)
-	for _, target := range []string{"1.2.3.4:443", "203.0.113.7:80", "[2001:db8::1]:443"} {
-		// One CONNECT per session: v1 is unmuxed (VPN-R17), so every
-		// refusal opens a fresh tunnel — exactly as the relay node would.
-		ws := openRawTunnel(t, mustTunnelURL(t, proxy))
-		if reason := connectErrReason(t, ws, target); reason != errReasonTargetIP {
-			t.Fatalf("%s: reason = %q, want %q", target, reason, errReasonTargetIP)
-		}
+// d242: an address target is the exit's default, so a literal reaches the
+// next gate (here the port set, which answers without a dial). The form-level
+// refusal exists only when the operator asks for it with refuseIPLiterals,
+// which answers before the port set — both halves in one place, because the
+// order is the point.
+func TestServerAddressTargetsByDefault(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		cfg  egressConfig
+		want string
+	}{
+		{"literal passes the form gate by default", egressConfig{}, errReasonPortDenied},
+		{"the strict door refuses the form first", egressConfig{RefuseIPLiterals: true}, errReasonTargetIP},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s := newTunnelServer(t, true, tc.cfg)
+			proxy := newHTTPServer(t, s)
+			for _, target := range []string{"1.2.3.4:22", "[2001:db8::1]:22"} {
+				// One CONNECT per session: v1 is unmuxed (VPN-R17), so every
+				// refusal opens a fresh tunnel — exactly as the relay node would.
+				ws := openRawTunnel(t, mustTunnelURL(t, proxy))
+				if reason := connectErrReason(t, ws, target); reason != tc.want {
+					t.Fatalf("%s: reason = %q, want %q", target, reason, tc.want)
+				}
+			}
+		})
 	}
 }
 
-// d163: guaranteed refusals answer FIRST — before the IP-exit switch, before
-// the allow table, before the port set. The config below would permit every
-// one of these targets if any later gate owned them, and the refusal order
-// is exactly what stops that. The last case is the complementary half: an
-// address the switch admits but no allow rule claims still dies at the
-// table, not at a dial.
+// d163/d242: guaranteed refusals answer FIRST — before the strict-door
+// switch, before the operator's reservation table, before the port set. The
+// config below would permit every one of these targets if any later gate
+// owned them (it allows the ranges back in and the ports), and the refusal
+// order is exactly what stops that.
 func TestServerGuaranteedRefusalsAnswerFirst(t *testing.T) {
 	s := newTunnelServer(t, true, egressConfig{
-		AllowIPLiterals: true,
-		AllowCidrs:      []string{"127.0.0.0/8", "::1/128"},
-		Ports:           []uint16{80, 443},
+		RefuseIPLiterals: true,
+		AllowCidrs:       []string{"127.0.0.0/8", "::1/128"},
+		Ports:            []uint16{80, 443},
 	})
 	proxy := newHTTPServer(t, s)
 	for _, target := range []string{
@@ -317,9 +328,36 @@ func TestServerGuaranteedRefusalsAnswerFirst(t *testing.T) {
 			t.Fatalf("%s: reason = %q, want %q", target, reason, errReasonBogon)
 		}
 	}
-	ws := openRawTunnel(t, mustTunnelURL(t, proxy))
-	if reason := connectErrReason(t, ws, "169.254.169.254:80"); reason != errReasonDenied {
-		t.Fatalf("metadata address: reason = %q, want %q", reason, errReasonDenied)
+}
+
+// d242's stated trade: link-local space is admitted by default because real
+// peers live there, so the metadata endpoint is reachable until an operator
+// reserves it — one denyCidrs entry restores the old posture, and allowCidrs
+// carves a range back out of a reservation.
+func TestServerMetadataNeedsAnOperatorReservation(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		egress egressConfig
+		want   string
+	}{
+		// The port set answers after the address gate and before any dial, so
+		// a permitted port here would make the suite dial link-local space —
+		// the refusal that proves admission is the port's.
+		{"metadata is reachable by default", egressConfig{Ports: []uint16{443}}, errReasonPortDenied},
+		{"an operator reservation refuses it",
+			egressConfig{Ports: []uint16{443}, DenyCidrs: []string{"169.254.0.0/16"}}, errReasonDenied},
+		{"a reservation can carve an exception back out",
+			egressConfig{Ports: []uint16{443}, DenyCidrs: []string{"169.254.0.0/16"},
+				AllowCidrs: []string{"169.254.169.254/32"}}, errReasonPortDenied},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s := newTunnelServer(t, true, tc.egress)
+			proxy := newHTTPServer(t, s)
+			ws := openRawTunnel(t, mustTunnelURL(t, proxy))
+			if reason := connectErrReason(t, ws, "169.254.169.254:80"); reason != tc.want {
+				t.Fatalf("reason = %q, want %q", reason, tc.want)
+			}
+		})
 	}
 }
 
@@ -339,17 +377,25 @@ func TestServerRefusesNonPermittedPorts(t *testing.T) {
 	}
 }
 
-// VPN-R35: default-deny catches the resolution itself — a permitted port on
-// a loopback-resolving name is still refused with the DENIED vocabulary.
-func TestServerRefusesLoopbackResolvingTargetsByDefault(t *testing.T) {
-	s := newTunnelServer(t, true, egressConfig{Ports: []uint16{65000}})
+// d242: the reservation table catches the RESOLUTION, not the spelling — a
+// name that resolves into a reserved range is refused with the DENIED
+// vocabulary, and the same name dials when nothing is reserved. The door
+// refuses `localhost`/`.localhost` as names (d163), so this proof needs an
+// alias the suite's resolver maps to 127.0.0.1.
+func TestServerReservedRangeRefusesAResolvingName(t *testing.T) {
+	s := newTunnelServer(t, true, egressConfig{Ports: []uint16{65000}, DenyCidrs: []string{"127.0.0.0/8"}})
 	proxy := newHTTPServer(t, s)
-	// A name that RESOLVES into the deny table — the door refuses
-	// `localhost`/`.localhost` as names (d163), so this proof needs an
-	// alias the suite's resolver maps to 127.0.0.1.
 	ws := openRawTunnel(t, mustTunnelURL(t, proxy))
 	if reason := connectErrReason(t, ws, "loopback.test:65000"); reason != errReasonDenied {
 		t.Fatalf("reason = %q, want %q", reason, errReasonDenied)
+	}
+
+	// Nothing reserved: the same name reaches the dial path (and fails
+	// there, which is what proves the gate let it through).
+	open := newTunnelServer(t, true, egressConfig{Ports: []uint16{65000}})
+	ws = openRawTunnel(t, mustTunnelURL(t, newHTTPServer(t, open)))
+	if reason := connectErrReason(t, ws, "loopback.test:65000"); reason != errReasonDial {
+		t.Fatalf("unreserved name: reason = %q, want %q", reason, errReasonDial)
 	}
 }
 

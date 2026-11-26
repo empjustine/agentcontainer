@@ -266,22 +266,33 @@ func checkStagedEgress(relays []relayPeerEntry) error {
 	return nil
 }
 
-// sameEgress compares two optional tables by meaning, not spelling: the CIDR
-// and port lists are sets, so their order is not a difference.
+// sameCidrSet and samePortSet compare two lists as sets: a rotation that
+// restates the same policy in another order is not a difference.
+func sameCidrSet(a, b []string) bool {
+	left, right := slices.Clone(a), slices.Clone(b)
+	slices.Sort(left)
+	slices.Sort(right)
+	return slices.Equal(left, right)
+}
+
+func samePortSet(a, b []uint16) bool {
+	left, right := slices.Clone(a), slices.Clone(b)
+	slices.Sort(left)
+	slices.Sort(right)
+	return slices.Equal(left, right)
+}
+
+// sameEgress compares two optional tables by meaning, not spelling.
 func sameEgress(a, b *egressConfig) bool {
 	if a == nil || b == nil {
 		return a == nil && b == nil
 	}
-	if a.AllowIPLiterals != b.AllowIPLiterals {
+	if a.RefuseIPLiterals != b.RefuseIPLiterals {
 		return false
 	}
-	cidrsA, cidrsB := slices.Clone(a.AllowCidrs), slices.Clone(b.AllowCidrs)
-	portsA, portsB := slices.Clone(a.Ports), slices.Clone(b.Ports)
-	slices.Sort(cidrsA)
-	slices.Sort(cidrsB)
-	slices.Sort(portsA)
-	slices.Sort(portsB)
-	return slices.Equal(cidrsA, cidrsB) && slices.Equal(portsA, portsB)
+	return sameCidrSet(a.DenyCidrs, b.DenyCidrs) &&
+		sameCidrSet(a.AllowCidrs, b.AllowCidrs) &&
+		samePortSet(a.Ports, b.Ports)
 }
 
 func readStoreJSON(root, name string, out any) error {
