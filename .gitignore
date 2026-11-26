@@ -24,6 +24,13 @@ __pycache__/
 # demand, never tracked. uv.lock IS tracked (the package-lock.json analog).
 .venv/
 
+# Local scratch awaiting the cold-storage move: a folder named `stage` is where
+# in-progress work parks before it leaves the tree — never tracked, never part
+# of a build. Ignoring it here is also what keeps it out of the gates: oxfmt and
+# ruff read this file, and lint.sh's `find` legs prune the name explicitly, so a
+# half-finished dump cannot turn the sweep red (docs/d246).
+stage/
+
 # Maven build outputs of the sbex unit — every module's target/ is disposable:
 # the jar is the artifact and nothing under target/ is ever an input.
 sbex/**/target/

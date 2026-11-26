@@ -49,8 +49,11 @@ log_info "shellcheck"
 # pnpm tree may carry vendor *.sh files (pi-tui's native build.sh), and this
 # gate owns only this repo's sources.
 # .venv is pruned alongside node_modules: the gate environment ships its
-# own .sh files (tqdm's completion.sh) that are third-party, not ours.
+# own .sh files (tqdm's completion.sh) that are third-party, not ours. `stage`
+# is pruned because it is local scratch awaiting the cold-storage move
+# (docs/d246, .gitignore): a half-finished dump is not this gate's subject.
 dev_tool_run shellcheck find . -name node_modules -prune -o \
+	-path '*/stage' -prune -o \
 	-path ./.venv -prune -o \
 	-type f -name '*.sh' -exec shellcheck -x {} +
 
@@ -93,6 +96,7 @@ done'
 
 log_info "shfmt (advisory)"
 dev_tool_run shfmt find . -path ./node_modules -prune -o \
+	-path '*/stage' -prune -o \
 	-path ./.venv -prune -o \
 	-type f -name '*.sh' -exec shfmt -l {} + || true
 
