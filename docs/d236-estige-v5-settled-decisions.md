@@ -19,7 +19,7 @@ auditor checking why the earlier draft's wording no longer binds.
 ## Status
 
 Accepted and implemented in `estige/`. d169 stays as the original proposal, and
-this record wins where the two disagree. **d239 amends two things here**: the
+this record wins where the two disagree. **d241 amends two things here**: the
 windowed-carrier handshake rule binds `h2-post-windowed` only, because
 `h1.1-post-windowed` cannot complete a handshake behind an upgrade-stripping
 gateway and therefore retires; and the container open details below are
@@ -158,7 +158,7 @@ each window carries its own proof and its own TLS handshake and no TLS session
 spans windows. The non-windowed carriers run one handshake per admitted
 session. `h1.1-post-windowed` cannot honour that rule — a gateway that buffers
 the request body will not deliver the server's flight before the body ends —
-and d239 retires it rather than serve it unprotected.
+and d241 retires it rather than serve it unprotected.
 
 TLS is silent when idle. An inner keepalive writes `framePing` through the
 `tls.Conn` and answers with `framePong` through it. The raw-stream keepalive
@@ -174,7 +174,7 @@ tunnel is an implementation detail and no address reaches an outside reader.
 
 The letter modes are historical markers, not names. Documentation and code
 use `h2-post-unbounded`, `websocket` and `h2-post-windowed` from
-`estige/vocabulary.go`. `h1.1-post-windowed` retired with d239.
+`estige/vocabulary.go`. `h1.1-post-windowed` retired with d241.
 
 ### Container tooling
 
@@ -216,7 +216,7 @@ and `estige/run.go`:
   differ (compared by meaning, not spelling): admission trusts both
   certificates, while a session runs under one table, so differing rows would
   let row order decide policy.
-- **d239** amends the windowed-carrier handshake rule (it binds
+- **d241** amends the windowed-carrier handshake rule (it binds
   `h2-post-windowed` only) and records the `h1.1-post-windowed` retirement; it
   also carries the fail-closed ladder that follows from it.
 - d169 loses its marker, mixed-pairing, principal-SAN and letter-mode wording

@@ -1,5 +1,5 @@
 // exchangestream.go — the windowed carriers' shared exchange machinery
-// (docs/d077 §3/§4, d236, d239).
+// (docs/d077 §3/§4, d236, d241).
 //
 // WHY this exists at all: h2-post-windowed carries a session through a
 // sequence of bounded HTTP exchanges, so the exit needs session state that
@@ -9,7 +9,7 @@
 // trace-id is the session, the span-id its window position, and an unknown
 // trace-id or out-of-order span answers the camouflage 404 (VPN-R34).
 //
-// WHY h1.1-post-windowed is not here any more (d239): its channel needs a
+// WHY h1.1-post-windowed is not here any more (d241): its channel needs a
 // bidirectional window, which an upgrade-stripping gateway cannot carry — the
 // carrier answers only after the request body ends. Serving it without the
 // inner session would be a silent downgrade, so v5 fails closed on that shape

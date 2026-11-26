@@ -166,7 +166,7 @@ prefix itself (d085). What would change this posture
   The dispatch discriminator is `traceparent` presence (§4): the first
   authed POST (span 1) mints per-`trace-id` state; every later window
   carries the same `trace-id` with the next `span-id`.
-- **Status:** built, then retired with v5 (d239). It cannot carry the inner TLS
+- **Status:** built, then retired with v5 (d241). It cannot carry the inner TLS
   session through an upgrade-stripping gateway — the window answers only after
   the request body ends — and v5 refuses to serve it unprotected. The suite
   this bullet described went with the carrier; h2-post-windowed keeps the

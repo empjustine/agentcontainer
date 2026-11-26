@@ -48,13 +48,13 @@ Use these canonical names in current prose, requirements, and reference docs:
 | B            | **authenticated relay** | HTTPS path-prefix forward relay, operator-authenticated                                 |
 | C            | **h2-post-unbounded**   | HTTP/2 streaming `POST`; one long-lived request/response body pair per local connection |
 | D            | **websocket**           | HTTP/1.1 WebSocket upgrade carrying the tunnel protocol                                 |
-| E            | **h1.1-post-windowed**  | HTTP/1.1 `POST` exchanges, stop-and-wait / windowed — **retired with v5** (d239)        |
+| E            | **h1.1-post-windowed**  | HTTP/1.1 `POST` exchanges, stop-and-wait / windowed — **retired with v5** (d241)        |
 | —            | **h2-post-windowed**    | The same h2 `POST` split into size-bounded windows for a capped edge (d222)             |
 
 - **Letters are historical aliases, not names.** The mechanical rename has
   landed: code, logs, current prose and reference docs use the canonical
   names only. A retired carrier's name is not reused for a different
-  mechanism: h1.1-post-windowed left the vocabulary with d239, and its letter
+  mechanism: h1.1-post-windowed left the vocabulary with d241, and its letter
   E describes nothing current. A dated decision record may keep its own letters while
   recounting its own decision, and an explicit "formerly mode X" note may
   connect old text; nothing new may introduce a letter.

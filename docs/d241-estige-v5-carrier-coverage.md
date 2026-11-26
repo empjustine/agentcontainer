@@ -1,15 +1,15 @@
 ---
-id: d239
+id: d241
 type: module-design
 status: active
-title: "d239 — estige v5's carrier coverage: h1.1-post-windowed retires, the channel ships on the three carriers that can carry it"
+title: "d241 — estige v5's carrier coverage: h1.1-post-windowed retires, the channel ships on the three carriers that can carry it"
 parent: estige
 depends-on: [d169, d236, d077, d108]
 references: [d093, d171, d222, d238]
 tags: ["estige", "v5", "mtls", "carriers", "decisions"]
 ---
 
-# d239 — estige v5's carrier coverage
+# d241 — estige v5's carrier coverage
 
 This record closes the question d236 left open for the two windowed carriers:
 how the inner TLS session is placed on them. It reverses d236's per-window
@@ -120,7 +120,7 @@ request round trip), and the handshake never leaves the window: a window's
   h2-post-windowed's, and the h1.1 carrier retires. Its container "Open
   details" are resolved in the same implementation change and recorded there.
 - **d169** — its "on every rung of the ladder" sentence is bounded by this
-  record; its Status moves to implemented-with-d239.
+  record; its Status moves to implemented-with-d241.
 - **d108** — v5's generation row states what shipped: three carriers, one
   retired.
 - **d105** — the carrier vocabulary loses `h1.1-post-windowed`; a retired name

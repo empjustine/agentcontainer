@@ -1,7 +1,7 @@
 package main
 
 // exchangestream_test.go — traceparent's grammar and the retired-carrier
-// refusal (docs/d077 §4, d239).
+// refusal (docs/d077 §4, d241).
 
 import (
 	"bytes"
@@ -60,7 +60,7 @@ func TestParseTraceparent(t *testing.T) {
 	})
 }
 
-// TestRetiredH1WindowedFailsClosed pins d239: an authenticated window shaped
+// TestRetiredH1WindowedFailsClosed pins d241: an authenticated window shaped
 // like h1.1-post-windowed (traceparent, no window header) is refused with the
 // camouflage 404 and no carrier answer — never served unprotected.
 func TestRetiredH1WindowedFailsClosed(t *testing.T) {

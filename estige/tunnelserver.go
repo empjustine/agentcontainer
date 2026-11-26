@@ -192,7 +192,7 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request, h2Unb
 	// without it the POST is h2-post-unbounded's single long-lived request.
 	//
 	// A traceparent without a window header is h1.1-post-windowed, which v5
-	// retired (d239): its channel cannot complete behind an upgrade-stripping
+	// retired (d241): its channel cannot complete behind an upgrade-stripping
 	// gateway, and serving the carrier unprotected would be a silent
 	// downgrade. It fails closed here — no carrier answer, no fallback.
 	if r.Method == http.MethodPost && !headerHasToken(r.Header, "Upgrade", "websocket") {
@@ -201,7 +201,7 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request, h2Unb
 			return
 		}
 		if r.Header.Get("Traceparent") != "" {
-			logLine(sevWarn, "[estige] tunnel: refusing a retired h1.1-post-windowed window (d239)")
+			logLine(sevWarn, "[estige] tunnel: refusing a retired h1.1-post-windowed window (d241)")
 			writeFunnel404(w, r)
 			return
 		}

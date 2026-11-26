@@ -545,7 +545,7 @@ const carrierOffer = "h2-post-unbounded, websocket, h2-post-windowed"
 // at request initiation. One refusal switches this process to the order
 // websocket → h2-post-windowed, and the posture is remembered so later
 // CONNECTs pay nothing. An uncapped edge never refuses, so it keeps the
-// lowest-overhead carrier first. h1.1-post-windowed retired with d239: no
+// lowest-overhead carrier first. h1.1-post-windowed retired with d241: no
 // rung below h2-post-windowed exists, so an endpoint that refuses all three
 // fails closed.
 //

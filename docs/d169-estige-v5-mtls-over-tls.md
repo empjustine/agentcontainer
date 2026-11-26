@@ -28,11 +28,11 @@ plus a `net.Conn` adapter, and verification is the library's own: no
 ## Status
 
 Implemented in `estige/` as deployment generation v5, through the settled
-details in d236 and the carrier correction in d239. The channel runs on the
+details in d236 and the carrier correction in d241. The channel runs on the
 three carriers v5 serves (`h2-post-unbounded`, `websocket`,
 `h2-post-windowed`); `h1.1-post-windowed` could not complete a handshake
 behind an upgrade-stripping gateway and retired rather than serve unprotected
-bytes (d239). "On every rung of the ladder (modes C, D and E)" below therefore
+bytes (d241). "On every rung of the ladder (modes C, D and E)" below therefore
 means the rungs that exist: C, the WebSocket and D.
 
 An earlier revision of this draft kept the clock out of the channel with

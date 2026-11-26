@@ -32,7 +32,7 @@ end to end and never trust the node in the middle.
 > capped-edge port refuses it at request initiation and the relay switches to
 > websocket → h2-post-windowed for the rest of the process (docs/d222). The
 > `-modes`/`MODES` knob retired with docs/d093, and the h1.1 windowed floor
-> retired with docs/d239 — its window cannot carry a handshake through a
+> retired with docs/d241 — its window cannot carry a handshake through a
 > buffering gateway, so it fails closed instead of serving unprotected bytes;
 > the websocket carrier is the h1.1 path for any edge that passes upgrades.
 > Requirements are d188's, negotiation/framing d077's, names d105's, the
@@ -255,7 +255,7 @@ not read — docs/d094: the chain is ONE blind TCP tunnel under the tunnel leg
 only, `Transport.Proxy` stays nil, provider requests never touch it). The
 carrier ladder rides whole — h2-post-unbounded → websocket →
 h2-post-windowed, ranked per dial, no `-modes`/`MODES` override
-(docs/d093/d239). The h2 half is learned: an exit port serving a capped
+(docs/d093/d241). The h2 half is learned: an exit port serving a capped
 edge refuses h2-post-unbounded at request initiation, and that one refusal
 switches the process to websocket → h2-post-windowed for later CONNECTs
 (docs/d222) — and the listeners default to

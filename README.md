@@ -123,7 +123,7 @@ agentcontainer/
 │   ├── DESIGN.md                        #   → llama-swap config.d layers, generation-time path baking, capability gating, bearer auth
 │   └── *.md                             #   → this unit's own living docs (d117): hf-cache-upkeep / refresh-...-manifest runbooks, gguf-model-tooling
 │
-├── estige/                              # SSL-VPN tunnel node (Go, one binary, two roles: exit + relay), v5 since d236/d239, installed as a package (d073/d077/d120)
+├── estige/                              # SSL-VPN tunnel node (Go, one binary, two roles: exit + relay), v5 since d236/d241, installed as a package (d073/d077/d120)
 │   ├── main.go                          #   → dispatches the two roles (`-mode exit` tunnel server / `-mode relay`) and the three operator verbs: `keygen`, `public`, `key check` (the store, d236), plus `proxy-env` and `-version`
 │   ├── packaging/                       #   → the deb/rpm writers (pure Go) + termux/ and ol/ format inputs; `out/` is gitignored (docs/d120)
 │   ├── build.mjs                        #   → this folder's own build (d083/d113): go-build probe + target selection (native · packages), no root builder; `./node-run.sh estige/build.mjs`. The image is Go: `go build .` then `go run build.go` (d236)

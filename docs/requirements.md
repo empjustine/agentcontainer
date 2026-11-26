@@ -72,7 +72,7 @@ docs/d236/d085/d093). The tunnel's operator credential is the mutual
 `e-relay-auth`/`e-exit-auth` proof pair plus an inner TLS channel (docs/d104, d131-d133, d169,
 d236) over the bounded principal set of
 [d078](d078-ssl-vpn-operator-keys.md) (the NFR-5 exception). The h1.1 windowed
-floor retired with [d239](d239-estige-v5-carrier-coverage.md). FR-E1 is
+floor retired with [d241](d241-estige-v5-carrier-coverage.md). FR-E1 is
 the one BRD row about the tunnel credential itself; the fuller requirements
 (`VPN-R*`) live in [d188](d188-tunnel-contract.md).
 

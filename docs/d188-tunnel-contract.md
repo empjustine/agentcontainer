@@ -55,7 +55,7 @@ MITMs.
   gets a second exit port whose requests refuse h2-post-unbounded at request
   initiation (d222): the relay learns that posture from one refusal and ranks
   websocket, then **h2-post-windowed**. The ladder is still one offer, not an
-  operator selection. h1.1-post-windowed retired with d239 (its window cannot
+  operator selection. h1.1-post-windowed retired with d241 (its window cannot
   carry v5's inner session through a buffering gateway); an endpoint that
   refuses all three carriers fails closed. The exit serves one port per
   edge (`PORT`, and optionally `PORT_CLOUDFLARE`, docs/d222) and decides a

@@ -22,7 +22,7 @@ elsewhere.
 
 Carriers are named by mechanism, never by letters (d105): this record uses
 **h2-post-unbounded**, **websocket**, **h2-post-windowed** and
-**h1.1-post-windowed** throughout. d239 retires h1.1-post-windowed with v5, so
+**h1.1-post-windowed** throughout. d241 retires h1.1-post-windowed with v5, so
 the ladder this record ranks ends at h2-post-windowed.
 
 ## Problem
@@ -59,7 +59,7 @@ and no per-edge env var carries it.
   for that edge port: the process remembers it and uses websocket →
   h2-post-windowed for later CONNECTs. An uncapped port never refuses, so it
   keeps the lowest-overhead carrier first. One cheap request is the whole
-  discovery cost. (h1.1-post-windowed left this ladder with v5 — d239 — so an
+  discovery cost. (h1.1-post-windowed left this ladder with v5 — d241 — so an
   endpoint that refuses both remaining rungs fails closed, VPN-R26.)
 - h2-post-windowed keeps the h2 POST's identity, session id and full-duplex
   behavior and adds a **window**: the request body is closed when the next
@@ -76,7 +76,7 @@ and no per-edge env var carries it.
 - **Discriminator.** `X-Estige-Window-Bytes` declares the window's budget.
   Its presence selects this carrier; `Traceparent` alone is the retired
   h1.1-post-windowed shape, which the exit answers with the camouflage 404
-  (d239); neither is h2-post-unbounded. The exit admits a
+  (d241); neither is h2-post-unbounded. The exit admits a
   declared bound up to a 32 MiB ceiling (bounding one session's queued
   uplink) and treats an over-ceiling declaration as a malformed tunnel
   request — the camouflage 404.
@@ -121,7 +121,7 @@ and no per-edge env var carries it.
   unbounded carrier wins and is the whole session.
 - **After a refusal:** websocket, h2-post-windowed. The WebSocket is preferred
   because one upgrade and a full-duplex frame stream carry no per-window
-  request; h2-post-windowed is the no-upgrade fallback and, since d239, the
+  request; h2-post-windowed is the no-upgrade fallback and, since d241, the
   last rung — h1.1-post-windowed's floor retires with v5 because its window
   cannot carry the inner TLS handshake through a buffering gateway.
 
@@ -130,7 +130,7 @@ traffic never crosses an 8 MiB window, so the two tie, and bulk uplink pays
 one round trip per crossing where the WebSocket pays none. Its value is (1)
 no upgrade dependency, (2) a cap-safe session, and (3) a drastically lower
 request count than the 64 KiB exchanges h1.1-post-windowed used (retired with
-v5, d239), which matters on an edge that meters or rate-limits requests.
+v5, d241), which matters on an edge that meters or rate-limits requests.
 
 ## Cloudflare edge facts
 
@@ -159,7 +159,7 @@ v5, d239), which matters on an edge that meters or rate-limits requests.
   Funnel-only deployment is unchanged.
 - The exit's logs gain one CLF line per window, as the h1.1 windowed carrier
   does; the session record stays one per CONNECT and names the carrier.
-- The relay's startup line names the carriers it offers (three since d239); a
+- The relay's startup line names the carriers it offers (three since d241); a
   refusal is logged once when the posture is learned, not per dial.
 - h2-post-unbounded stays available on the Funnel port for sessions known to
   stay small, at the operator's risk of a mid-body rejection.
@@ -220,7 +220,7 @@ third boolean.
 ## Findings and verification
 
 - The mechanical rename landed (d105): code comments, logs, live docs and the
-  lifecycle record use the canonical carrier names (three of them since d239);
+  lifecycle record use the canonical carrier names (three of them since d241);
   no letter alias remains in a log line or a current spec.
 - The capped-edge refusal is a request-initiation test (no body read), and the
   relay learns the edge's posture from it once; no per-edge env var is needed.

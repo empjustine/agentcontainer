@@ -22,7 +22,7 @@ guarantee and the rotation-without-outage intent). This file is the detail you
 need to implement or audit the store itself. d236 retires the role directories
 below: v5 uses one merged host key with its certificate, and this record's
 grammar is what ships — with three corrections the implementation settled
-(d236's amendment map, d239): `relay.json`'s dial `endpoint` sits at the top
+(d236's amendment map, d241): `relay.json`'s dial `endpoint` sits at the top
 level beside the pinned `exit` rows, `exit.json` carries `egress` beside the
 admitted relays and a relay row may carry its own `egress`, and every `public`
 value is the host **certificate**'s unpadded base64url DER, not the bare SPKI.

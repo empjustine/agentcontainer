@@ -38,7 +38,7 @@ const (
 	// the carrier discriminator: a POST with it is h2-post-windowed, without
 	// it is h2-post-unbounded. A Traceparent alone is the retired
 	// h1.1-post-windowed shape, which v5 answers with the camouflage 404
-	// (d239).
+	// (d241).
 	windowHeader = "X-Estige-Window-Bytes"
 	// h2WindowedBytes is the relay's window on this carrier. It is a fixed
 	// fraction of the smallest edge cap the fleet meets (Cloudflare's 100 MB)
