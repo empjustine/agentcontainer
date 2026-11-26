@@ -1,7 +1,7 @@
 // journald.go — the journal protocol sink (docs/d155).
 //
 // WHY the raw protocol and not sd_journal_send: the binary is built
-// CGO_ENABLED=0 (docs/d120's packages, the Containerfile), and libsystemd
+// CGO_ENABLED=0 (docs/d120's packages, the image recipe build.go stages), and libsystemd
 // arrives through cgo. The protocol is a Unix datagram of FIELD=value lines —
 // exactly what the library writes — so a static binary reaches it with
 // net.DialUnix and no dependency.

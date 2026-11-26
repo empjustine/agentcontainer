@@ -212,7 +212,8 @@ exit → relay:  X-Exit-Proof:  v2.<exit-key-name>.<nonce_e>.<sig_e>
   grows only on proofs that verified — a forged or unknown-name proof never
   reaches one, and an attacker without a principal's private key cannot mint
   valid proofs to fill that side's cache — so each is one LRU ring with a 64
-  Ki-entry cap (≈2 MiB at 16 bytes per nonce) whose eviction horizon is 64 Ki
+  Ki-entry cap (≈5.3 MiB as shipped: 16 raw bytes per nonce, plus the map entry
+  and the eviction-order slot around it) whose eviction horizon is 64 Ki
   _genuine_ authentications: practically forever, and no clock is read anywhere
   in the auth path — a drifting host can cause an outage elsewhere, never a
   weakened or widened auth decision.
@@ -292,8 +293,11 @@ constant cost:
   and unknown-name proofs never reach either — and its memory is the cap,
   independent of attack traffic: the exit's ring grows only on genuine
   handshakes, the relay's only on exit proofs it accepted, so an attacker
-  without a principal's private key cannot grow that side's ring. Two rings at
-  ≈2 MiB each is the whole memory cost of replay protection in both directions.
+  without a principal's private key cannot grow that side's ring. The shipped
+  `nonceRing` measures ≈5.3 MiB at its 64 Ki cap (85 B/entry: the map entry
+  plus the eviction-order slice), so both directions together cost ≈10.6 MiB of
+  replay protection — the deployment-sizing number, not the 2 MiB an earlier
+  estimate of the map alone implied.
 - The residual timing delta — an unknown name skips the proof verify that a
   pinned one also pays, tens of microseconds — is below network jitter and
   against a name that is a log-safe label the operator's logs already print;

@@ -6,8 +6,8 @@
 // WHY the chain is hand-rolled here instead of http.Transport.Proxy: the
 // chain is a ROUTE, not a policy object. Transport.Proxy is ambient,
 // per-transport, and for a cleartext URL it becomes a forwarding proxy
-// that reads the bearer (the old "Proxy is nil on purpose" fear, modec.go
-// / modee.go). chainProxy.dial is the opposite shape — one parse at
+// that reads the credential (the "Proxy is nil on purpose" rule, modec.go /
+// exchangestream.go). chainProxy.dial is the opposite shape — one parse at
 // startup, one blind TCP tunnel (CONNECT or SOCKS5) every carrier's dial
 // rides, TLS still end-to-end over it (VPN-R28/R55 untouched). See
 // docs/d094 for the full decision.

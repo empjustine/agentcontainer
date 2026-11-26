@@ -63,10 +63,12 @@ const (
 // node dials none of its own: accepting the flag silently would hide a relay
 // argv line copied onto the exit host, so each is refused by name (docs/d171's
 // ledger applied to d236's selectors).
-func exitRoleRefusal(insecureExit bool, forwards int, exitName, endpoint string) error {
+func exitRoleRefusal(insecureExit, legacyIPRelay bool, forwards int, exitName, endpoint string) error {
 	switch {
 	case insecureExit:
 		return errors.New("-insecure-exit belongs to the relay role; the exit node dials no tunnel")
+	case legacyIPRelay:
+		return errors.New("-legacy-ip-relay belongs to the relay role; the exit node has no local doors (d163)")
 	case forwards > 0:
 		return errors.New("-L belongs to the relay role; the exit node opens no local listeners")
 	case exitName != "":
@@ -528,7 +530,7 @@ func main() {
 	if *mode != "exit" {
 		fatalLine("[estige] unknown -mode %q (want exit or relay)", *mode)
 	}
-	if err := exitRoleRefusal(*insecureExit, len(forwardArgs), *exitName, *endpointOverride); err != nil {
+	if err := exitRoleRefusal(*insecureExit, *legacyIPRelay, len(forwardArgs), *exitName, *endpointOverride); err != nil {
 		fatalLine("[estige] %v", err)
 	}
 

@@ -125,6 +125,9 @@ request round trip), and the handshake never leaves the window: a window's
   retired.
 - **d105** — the carrier vocabulary loses `h1.1-post-windowed`; a retired name
   is not a carrier.
+- **The living deployment surfaces** that list the transports move with it:
+  `docs/environments-and-variants.md`'s estige row, `estige/README.md`, and
+  `docs/architecture.md` name the three carriers and say the floor retired.
 
 ## Verification
 

@@ -56,7 +56,8 @@ GPU host (local inference only) — two serving processes, one concern each (doc
   llama-swap serves the LOCAL catalog and nothing else.
 - `estige/` — the SSL-VPN tunnel node (this folder's own `build.sh`, installed
   as a service or run directly; docs/d120, LAN **8080**, host networking): the tunnel transports (h2-post-unbounded, WebSocket,
-  h1.1-post-windowed; docs/d073/d077/d105) under the single reserved path `/vpn`.
+  h2-post-windowed; docs/d073/d077/d105, and d239 for the h1.1 floor's
+  retirement) under the single reserved path `/vpn`.
   This is the world-visible port — the tailscale funnel serves the
   `<funnel-id>` route to it — and every other path answers the funnel's
   plain 404: the allowlist `/<upstream-host>/<path>` router that shared it
