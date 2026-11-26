@@ -45,10 +45,11 @@ come from that package.**
 - **pnpm is a pinned dev tool**, in `./dev-tools.sh`'s one pin table with the
   rest (docs/d139); it never appears in a runtime path.
 - **Install is one path.** `./npm-tools.sh` gained `pnpm_tools_ensure`, which
-  `./check-types.sh` calls beside `npm_tools_ensure`: the gate installs what it
-  reads, per folder, stamped by the lockfile's cksum under `node_modules`, and
-  skips an unchanged folder. `--frozen-lockfile` makes a drifted `package.json`
-  fail at the gate instead of resolving silently.
+  `./check-types.sh` and `./lint.sh`'s oxlint leg (d243) call beside
+  `npm_tools_ensure`: a gate installs what it reads, per folder, stamped by the
+  lockfile's cksum under `node_modules`, and skips an unchanged folder.
+  `--frozen-lockfile` makes a drifted `package.json` fail at the gate instead of
+  resolving silently.
 - **The entry is `index.mjs`**, its factory typed by a JSDoc
   `@typedef {import("@earendil-works/pi-coding-agent").ExtensionAPI}`, and the
   refresh context is DERIVED — `Parameters<NonNullable<ProviderConfig["refreshModels"]>>[0]`
@@ -89,11 +90,13 @@ family one policy; each of the four asserts it in its own suite.
   registration, with a comment naming the composer's truthiness check. A cast
   whose only content is "the host's declaration is narrower than its runtime" is
   the honest minimum; a returned `[]` would REPLACE the catalog with nothing.
-- **A gate now needs a network install.** `./check-types.sh` reads six
-  `node_modules` trees; on a host with no registry the pi entries cannot resolve
-  their types, and the install path fails loudly with a `./dev-tools.sh pnpm`
-  hint rather than skipping. The rest of the sweep (biome, oxlint, knip, ruff,
-  ty, the text gates) stays offline.
+- **A gate now needs a network install — two of them do.** `./check-types.sh`
+  and `./lint.sh` each read the six `node_modules` trees; the type-aware oxlint
+  leg resolves the same imports, so it acquires them too (d243) rather than
+  reporting their absence as findings. On a host with no registry the pi entries
+  cannot resolve their types, and the install path fails loudly with a
+  `./dev-tools.sh pnpm` hint rather than skipping. The rest of the sweep
+  (biome, knip, ruff, ty, the text gates) stays offline.
 - **Third-party shell now sits in the tree.** shellcheck's find prunes
   `node_modules` at any depth (pi-tui ships a `native/linux/build.sh`), and
   `.gitignore` covers the store and the trees; nothing else in the gates walks
