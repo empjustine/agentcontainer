@@ -13,7 +13,7 @@
 # (the Go suite in test.sh, golangci-lint's child `go list` in lint.sh) at ONE
 # version, and a second copy of a version string is drift waiting to happen.
 # docs/d139 supersedes d137's "the pin lives in lint.sh" placement. The pin
-# STYLE is unchanged in kind and narrowed in scope by docs/d241: a tool whose
+# STYLE is unchanged in kind and narrowed in scope by docs/d243: a tool whose
 # output IS the gate's meaning is pinned (golangci-lint, oxfmt, shellcheck,
 # shfmt, ruff, uv, ty — d137), and only `jq`, which joins output rather than
 # printing a verdict, floats at @latest.
@@ -40,7 +40,7 @@
 # The one pin table (docs/d139). A value is a mise tool version specifier;
 # @latest means "whatever the environment offers".
 #
-# Values track the TERMUX HOST PACKAGES (docs/d241): both target hosts run one
+# Values track the TERMUX HOST PACKAGES (docs/d243): both target hosts run one
 # environment, so a tool version that differs between them is a gate whose
 # verdict depends on the machine. Where mise's registry lags the host package
 # the value is mise's newest, because `mise exec` cannot install a version the
@@ -66,7 +66,7 @@ dev_tool_pin() {
 	# (d137). jq only joins the output the others produce and keeps floating.
 	shellcheck) printf '%s\n' '0.11.0' ;;
 	ruff) printf '%s\n' '0.17.6' ;;
-	# Termux's own shfmt is a `(devel)` build with no version to match (d241),
+	# Termux's own shfmt is a `(devel)` build with no version to match (d243),
 	# so this pin unifies the dev hosts and states what the gate ran with.
 	shfmt) printf '%s\n' '3.14.1' ;;
 	jq) printf '%s\n' 'latest' ;;

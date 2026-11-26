@@ -1,19 +1,19 @@
 ---
-id: d242
+id: d244
 type: architecture-design
 status: draft
-title: "d242 — an npx-shaped runner for the node units: what uv run provides, what node gives, and the pnpm path"
+title: "d244 — an npx-shaped runner for the node units: what uv run provides, what node gives, and the pnpm path"
 parent: architecture
 depends-on: [d138, d139]
-references: [d107, d113, d118, d137, d226, d241]
+references: [d107, d113, d118, d137, d226, d243]
 tags: ["research", "toolchain", "node", "pnpm", "dependencies", "spike"]
 ---
 
-# d242 — an `npx`-shaped runner for the node units
+# d244 — an `npx`-shaped runner for the node units
 
 A research spike, not a decision: it records the question, what was measured, and
 the path this tree would most likely take. Nothing here is in force, and no code,
-gate or pin changed because of it — the pin work that ran beside it is d241.
+gate or pin changed because of it — the pin work that ran beside it is d243.
 
 ## Status
 
@@ -102,7 +102,7 @@ What it means concretely:
   `pnpm --dir <unit>` for a specific folder. `pnpm dlx` is not used for anything
   a gate or a runtime path depends on, for the same reason `npm exec --package`
   is not (d107).
-- **pnpm itself is acquired by the tree's existing split** (d139, d241): the pin
+- **pnpm itself is acquired by the tree's existing split** (d139, d243): the pin
   table on a dev host, the host package on Termux. That is what keeps it clear of
   corepack's removal and of a fourth install mechanism.
 - **The entry runner stays.** A `uv run` shape does not remove the need for a

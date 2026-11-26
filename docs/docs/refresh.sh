@@ -23,7 +23,7 @@ die() {
 # The vendored tree is committed oxfmt-canonical and ./lint.sh gates that, so a
 # refresh has to land in the same shape — otherwise every re-clip would show a
 # formatting diff on top of the real change. The version is dev-tools.sh's pin
-# (d139/d241), read from that one table for the reason the pin exists: two oxfmt
+# (d139/d243), read from that one table for the reason the pin exists: two oxfmt
 # versions on one tree give two canonical forms, and the gate knows one.
 # shellcheck source-path=SCRIPTDIR/../.. source=dev-tools.sh
 . "$here/../../dev-tools.sh"

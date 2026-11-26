@@ -160,7 +160,7 @@ log_info "biome lint (gating — rule set in biome.jsonc; pinned by package-lock
 # --deny-warnings is what carries the exit status, in BOTH branches. `-D warning`
 # reads as a severity floor and is not one: -D/--deny names a RULE, so
 # `-D warning` asked for a rule called "warning" and gated nothing (measured on
-# the 1.95.0 pin, d241: a warning-level finding exits 0 under it and 1 under
+# the 1.95.0 pin, d243: a warning-level finding exits 0 under it and 1 under
 # --deny-warnings). The earlier flag is gone rather than kept beside the real
 # one, so no reader has to work out which of the two is live.
 log_info "oxlint (gating — type-aware JS/TS lint)"

@@ -1,15 +1,15 @@
 ---
-id: d241
+id: d243
 type: architecture-design
 status: active
-title: "d241 — a dev-tool pin is the version the Termux host ships, or the newest mise can fetch"
+title: "d243 — a dev-tool pin is the version the Termux host ships, or the newest mise can fetch"
 parent: architecture
 depends-on: [d139]
-references: [d107, d137, d226]
+references: [d107, d137, d226, d244]
 tags: ["toolchain", "pins", "termux", "mise", "npm", "reproducibility"]
 ---
 
-# d241 — a dev-tool pin is the version the Termux host ships
+# d243 — a dev-tool pin is the version the Termux host ships
 
 A pin's value is a fact about the whole tree, not about the machine that ran the
 install. This record sets how that value is chosen: from what the second target
@@ -76,8 +76,9 @@ whole record is about.
 ## Consequences
 
 - **The oxfmt bump cost no reformat.** 0.79.0 reports every tracked markdown
-  file already canonical — 1457 with these two records included, 1455 when the
-  bump was measured — so the version moved without a tree-wide diff.
+  file already canonical at the time of the bump, so the version moved without a
+  tree-wide diff. The file count is not a fixture: the tree the measurement ran
+  on held 1455 markdown files before these records landed.
 - **The oxlint bump exposed a gate that was not gating.** `oxlint . -D warning`
   reads as a severity floor and is not one: `-D`/`--deny` names a _rule_, so the
   command asked for a rule called "warning" and gated nothing (a warning-level
@@ -108,7 +109,7 @@ whole record is about.
 
 - `mise ls-remote` ceilings measured 2026-11-26: oxfmt 0.79.0, uv 0.13.9,
   ty 0.0.108, pnpm 12.23.0, maven 3.10.2, shellcheck 0.11.0, shfmt 3.14.1.
-- `oxfmt@0.79.0 --check '**/*.md'` → all 1457 files canonical (0.75.0: same).
+- `oxfmt@0.79.0 --check '**/*.md'` → every tracked markdown file canonical, 1457 at measurement (0.75.0: same).
 - `npm ci` against the re-locked tree, then `biome lint . --error-on-warnings`
   and `oxlint . --deny-warnings` → clean; `oxlint probe -W <rule>
   --deny-warnings` → exit 1 (the negative control that `-D warning` failed).
@@ -126,7 +127,7 @@ whole record is about.
   exists to remove, not a cheaper version of it.
 - **Move oxfmt into the npm lockfile now.** It is installable that way
   (`@oxfmt/binding-android-arm64` exists) and would bind both hosts to one
-  version; that is the toolchain path d242 investigates, and it is deliberately
+  version; that is the toolchain path d244 investigates, and it is deliberately
   not part of a pin bump.
 - **Keep the 3-day cooldown and land the lock later.** It leaves the two hosts
   disagreeing on every JS gate until an unrelated follow-up, which is worse than

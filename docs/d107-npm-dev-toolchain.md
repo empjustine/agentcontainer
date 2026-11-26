@@ -11,7 +11,7 @@ tags: ["tooling", "termux", "npm", "biome", "typescript", "knip", "lockfile"]
 
 # d107 — the JS dev toolchain is npm devDependencies
 
-> **Superseded in part (docs/d241).** The lockfile still owns these versions,
+> **Superseded in part (docs/d243).** The lockfile still owns these versions,
 > but its values now follow the Termux host packages rather than an aged pick,
 > and the sentence below about shell tool versions floating no longer holds: the
 > ones that print a gate verdict are exact pins in `dev-tools.sh` (`jq` alone
@@ -87,7 +87,7 @@ The facts that force the shape:
   devDependencies declared because the npm scripts name the binaries.
 - Shell tool versions remain floating (`@latest`/pkg). Locking those would
   need a different mechanism; npm cannot supply them. (See the note above:
-  docs/d241 pins them through mise, and npm still cannot supply them.)
+  docs/d243 pins them through mise, and npm still cannot supply them.)
 
 ## Alternatives rejected
 
